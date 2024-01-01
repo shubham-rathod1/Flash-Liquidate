@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -111,7 +111,7 @@ contract UniswapFlashSwap is IUniswapV2Callee {
             IERC20(liqAddress).balanceOf(address(this))
         );
 
-        swapTokens(liqAddress, tokenBorrow, pair, amount);
+        swapTokens(liqAddress, tokenBorrow, pair, amountToRepay);
 
         emit Log(
             "After successful swap",
@@ -169,13 +169,15 @@ contract UniswapFlashSwap is IUniswapV2Callee {
         path[1] = WETH;
         path[2] = _tokenOut;
 
+        console.log(IERC20(_tokenIn).balanceOf(address(this)),"input amount");
+
         // Execute the token swap
         uniswapRouter.swapExactTokensForTokens(
             IERC20(_tokenIn).balanceOf(address(this)),
             amount,
             path,
             address(this),
-            block.timestamp + 300 // deadline (5 minutes from now)
+            block.timestamp // deadline (5 minutes from now)
         );
     }
 }
