@@ -1,5 +1,5 @@
 {
     "solidity.defaultCompiler": "remote",
-    "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
+    "solidity.compileUsingRemoteVersion": "v0.7.6+commit.7338295f",
     "solidity.compileUsingLocalVersion": "/home/shubham/Downloads/work/projects/Flash-Liquidate/soljson-v0.7.6+commit.7338295f.js"
 }

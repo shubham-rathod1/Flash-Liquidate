@@ -6,7 +6,7 @@ require('@nomicfoundation/hardhat-toolbox');
 // console.log(api, "api key")
 
 module.exports = {
-  solidity: "0.8.20",
+  solidity: "0.7.6",
   // '0.7.6',
   networks: {
     hardhat: {
