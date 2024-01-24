@@ -11,6 +11,9 @@ const { Constants } = require('./constants');
 const { handleLiquidate } = require('./liquidationBot');
 
 const hre = require('hardhat');
+const LIQUIDATION_THRESHOLD =
+  '57896044618658097711785492504343953926634992332820282019728792003956564819967';
+const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 
 async function main() {
   const UniswapFlashSwap = await hre.ethers.deployContract(
@@ -38,14 +41,14 @@ async function main() {
   // user data before liquidation
 
   const data = await graphData.fetchGraphData(137);
-  console.log(data);
+  console.log('GRAPH_DATA', data);
 
-  const position = await handleLiquidate.computeLiquidablePositions(
+  const positions = await handleLiquidate.computeLiquidablePositions(
     data,
     helperContract
   );
 
-  console.log(position, 'positions!');
+  console.log(positions, 'positions!');
 
   const userData0 = await helperContract.getPoolFullData(
     '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
@@ -57,50 +60,55 @@ async function main() {
     'before liquidation',
     hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
     hre.ethers.formatEther(userData0._lendBalance1),
-    hre.ethers.formatEther(1)
+    hre.ethers.formatEther(1) * 10 ** 18
   );
 
-  // Create payload
+  // // Create payload
+  const liquidatePosition = async (position) => {
+    const isToken0 = position.liquidableToken == 'token0';
 
-  let payload = [
-    position[0].liquidabeToken == 'token0'
-      ? position[0].token0.id
-      : position[0].token1.id,
-      2447753103339871,
-    position[0].pool,
-    position[0].owner,
-    position[0].liquidabeToken == 'token0'
-      ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
-      : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
-    position[0].liquidabeToken == 'token0'
-      ? position[0].token1.id
-      : position[0].token0.id,
-    '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601',
-  ];
+    let payload = [
+      isToken0 ? position.token0.id : position.token1.id,
+      hre.ethers.formatEther(
+        isToken0 ? position.borrowBalance0 : position.borrowBalance1
+      ) *
+        10 ** 18,
+      position.pool,
+      position.owner,
+      `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
+      isToken0 ? position.token1.id : position.token0.id,
+      USER_ADDRESS,
+    ];
 
-  console.log(payload, "this is paylod");
+    console.log('PAYLOAD: ', payload);
 
-  // profit calculation here
+    // profit calculation here
 
-  // execute if profitable
+    // execute if profitable
 
-  const flash = await UniswapFlashSwap.FlashSwap(payload);
+    // check pool liquidity
 
-  // user data after liquidation
+    const flash = await UniswapFlashSwap.FlashSwap(payload);
 
-  const userData = await HelperContract.getPoolFullData(
-    '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
-    '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
-    '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
-  );
+    // user data after liquidation
 
-  console.log(
-    'after liquidation',
-    hre.ethers.formatEther(userData._borrowBalance0),
-    hre.ethers.formatEther(userData._lendBalance1)
-  );
+    const userData = await HelperContract.getPoolFullData(
+      '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
+      '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+      '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
+    );
 
-  flash.wait();
+    console.log(
+      'after liquidation',
+      hre.ethers.formatEther(userData._borrowBalance0),
+      hre.ethers.formatEther(userData._lendBalance1)
+    );
+
+    await flash.wait();
+  };
+  // needs to select one as required
+  // await Promise.all(positions?.map(liquidatePosition));
+  await Promise.allSettled(positions?.map(liquidatePosition));
 }
 
 // We recommend this pattern to be able to use async/await everywhere
