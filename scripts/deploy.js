@@ -4,6 +4,12 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
+var BigNumber = require('bignumber.js');
+const helperAbi = require('./abis/helper.json');
+const { graphData } = require('./fetcher');
+const { Constants } = require('./constants');
+const { handleLiquidate } = require('./liquidationBot');
+
 const hre = require('hardhat');
 
 async function main() {
@@ -12,31 +18,87 @@ async function main() {
     []
   );
   await UniswapFlashSwap.waitForDeployment();
+
+  const accounts = await ethers.getSigners();
+  console.log(accounts[0].address, 'my address!');
+
+  const HelperContract = await hre.ethers.deployContract('helper', []);
+  await HelperContract.waitForDeployment();
+
   // const FlashSwapAddress = UniswapFlashSwap.target;
 
   console.log(`FlashSwap deployed to ${UniswapFlashSwap.target}`);
+  console.log(`Helper deployed to ${HelperContract.target}`);
 
-  const flash = await UniswapFlashSwap.FlashSwap([
-    '0x172370d5cd63279efa6d502dab29171933a610af',
-    10000000000,
-    '0xcb7359dcdf523f32a8987c116a001a59dcebe00f',
+  const helperContract = await hre.ethers.getContractAt(
+    helperAbi,
+    HelperContract.target
+  );
+
+  // user data before liquidation
+
+  const data = await graphData.fetchGraphData(137);
+  console.log(data);
+
+  const position = await handleLiquidate.computeLiquidablePositions(
+    data,
+    helperContract
+  );
+
+  console.log(position, 'positions!');
+
+  const userData0 = await helperContract.getPoolFullData(
+    '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
+    '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+    '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
+  );
+
+  console.log(
+    'before liquidation',
+    hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
+    hre.ethers.formatEther(userData0._lendBalance1),
+    hre.ethers.formatEther(1)
+  );
+
+  // Create payload
+
+  let payload = [
+    position[0].liquidabeToken == 'token0'
+      ? position[0].token0.id
+      : position[0].token1.id,
+      2447753103339871,
+    position[0].pool,
+    position[0].owner,
+    position[0].liquidabeToken == 'token0'
+      ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
+      : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
+    position[0].liquidabeToken == 'token0'
+      ? position[0].token1.id
+      : position[0].token0.id,
     '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601',
-    10000000000,
-    '0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a',
-  ]);
+  ];
 
-  // const TokenSwaps = await hre.ethers.deployContract('TokenSwapper', []);
-  // await TokenSwaps.waitForDeployment();
-  // // const TokenSwapsAddress = TokenSwaps.target;
+  console.log(payload, "this is paylod");
 
-  // console.log(`TokenSwaps deployed to ${TokenSwaps.target}`);
+  // profit calculation here
 
-  // TokenSwaps.swapTokens(
-  //   '0x172370d5cd63279efa6d502dab29171933a610af',
-  //   '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
-  //   1000000,
-  //   0
-  // );
+  // execute if profitable
+
+  const flash = await UniswapFlashSwap.FlashSwap(payload);
+
+  // user data after liquidation
+
+  const userData = await HelperContract.getPoolFullData(
+    '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
+    '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+    '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
+  );
+
+  console.log(
+    'after liquidation',
+    hre.ethers.formatEther(userData._borrowBalance0),
+    hre.ethers.formatEther(userData._lendBalance1)
+  );
 
   flash.wait();
 }

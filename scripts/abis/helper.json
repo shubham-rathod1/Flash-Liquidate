@@ -1,0 +1,258 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "ltv",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lb",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rf",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_token0Liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_token1Liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "_core",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_token0",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_token1",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "_symbol0",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_symbol1",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_decimals0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_decimals1",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct helper.outData",
+        "name": "_out",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_position",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolFullData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "_token0Liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_token1Liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalLendShare0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalLendShare1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalBorrowShare0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalBorrowShare1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalBorrow0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_totalBorrow1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_interest0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_interest1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_lendShare0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_borrowShare0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_lendShare1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_borrowShare1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_lendBalance0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_borrowBalance0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_lendBalance1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_borrowBalance1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_healthFactor0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_healthFactor1",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct helper.outDataFull",
+        "name": "_out",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolTokensData",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_allowance0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_allowance1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_balance0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_balance1",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

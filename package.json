@@ -6,6 +6,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
-    "@uniswap/v3-periphery": "^1.4.4"
+    "@uniswap/v3-periphery": "^1.4.4",
+    "axios": "^1.6.5",
+    "bignumber.js": "^4.0.4"
   }
 }

@@ -14,13 +14,13 @@ contract UniswapFlashSwap is IUniswapV2Callee {
     address private constant FACTORY =
         0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
     address private constant UNILEDV2_CORE =
-        0xE1CA60c8A97b0cC0F444f5e15940E91a1d3feedF;
+        0xA9d39A0088466cbbB66266dB6C449f2645AF11c4;
     address private constant UNISWAP_ROUTER =
         0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
 
-    address public user = 0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601;
+    // address public user = 0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601;
 
-    IUniswapV2Router public uniswapRouter;
+    IUniswapV2Router02 public uniswapRouter;
     IUnilendV2Core public unilendCore;
     IUniswapV2Factory public uniswapFactory;
 
@@ -32,10 +32,11 @@ contract UniswapFlashSwap is IUniswapV2Callee {
         address _for;
         int256 liquidationAmount;
         address liqAddress;
+        address user;
     }
 
     constructor() {
-        uniswapRouter = IUniswapV2Router(UNISWAP_ROUTER);
+        uniswapRouter = IUniswapV2Router02(UNISWAP_ROUTER);
         unilendCore = IUnilendV2Core(UNILEDV2_CORE);
         uniswapFactory = IUniswapV2Factory(FACTORY);
     }
@@ -58,7 +59,8 @@ contract UniswapFlashSwap is IUniswapV2Callee {
             args.pool,
             args._for,
             args.liquidationAmount,
-            args.liqAddress
+            args.liqAddress,
+            args.user
         );
 
         IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), data);
@@ -88,24 +90,33 @@ contract UniswapFlashSwap is IUniswapV2Callee {
             address pool,
             address _for,
             int256 liquidationAmount,
-            address liqAddress
+            address liqAddress,
+            address user
         ) = abi.decode(
                 _data,
-                (address, uint256, address, address, int256, address)
+                (address, uint256, address, address, int256, address, address)
             );
 
         // about 0.3%
         uint256 fee = ((amount * 3) / 997) + 1;
         uint256 amountToRepay = amount + fee;
 
-        IERC20(tokenBorrow).approve(UNILEDV2_CORE, amount);
+        // console.log(amountToRepay, "amount needed to repay!");
 
-        console.log(
-            "user Balance befor liq",
-            IERC20(tokenBorrow).balanceOf(user)
-        );
+        IERC20(tokenBorrow).approve(UNILEDV2_CORE, 115792089237316195423570985008687907853269984665640564039457584007913129639935);
+
+        // console.log(
+        //     "borrow token and collateral token balance befor liq",
+        //      IERC20(tokenBorrow).balanceOf(address(this)),IERC20(liqAddress).balanceOf(address(this))
+        // );
 
         Liquidate(pool, _for, pair, liquidationAmount);
+
+        //  console.log(
+        //     "borrow token and collateral token balance after liq",
+        //      IERC20(tokenBorrow).balanceOf(address(this)),IERC20(liqAddress).balanceOf(address(this))
+        // );
+
         emit Log(
             "Liquidated Successfully",
             IERC20(liqAddress).balanceOf(address(this))
@@ -117,7 +128,15 @@ contract UniswapFlashSwap is IUniswapV2Callee {
             "After successful swap",
             IERC20(tokenBorrow).balanceOf(address(this))
         );
-
+        // console.log(
+        //     "swapped successfully",
+        //     IERC20(tokenBorrow).balanceOf(address(this))
+        // );
+        // check if it is profitable;
+        require(
+            amountToRepay <= IERC20(tokenBorrow).balanceOf(address(this)),
+            "Transaction not Profitable / Not enought to payback loan"
+        );
         // payback flashloan
         IERC20(tokenBorrow).safeTransfer(pair, amountToRepay);
 
@@ -127,17 +146,17 @@ contract UniswapFlashSwap is IUniswapV2Callee {
         IERC20(tokenBorrow).safeTransfer(user, remaining_Bal);
 
         emit Log("Transfered to Liquidator", remaining_Bal);
-        console.log(
-            "user Balance after liq",
-            IERC20(tokenBorrow).balanceOf(user)
-        );
+        // console.log(
+        //     "user Balance after liq",
+        //     IERC20(tokenBorrow).balanceOf(user)
+        // );
     }
 
     function Liquidate(
         address _pool,
         address _for,
         address _pair,
-        int256 _liquidationAmount
+        int _liquidationAmount
     ) private {
         require(msg.sender == _pair, "Sender is not Pair");
 
@@ -169,12 +188,12 @@ contract UniswapFlashSwap is IUniswapV2Callee {
         path[1] = WETH;
         path[2] = _tokenOut;
 
-        console.log(IERC20(_tokenIn).balanceOf(address(this)),"input amount");
+        // console.log(IERC20(_tokenIn).balanceOf(address(this)), "input amount");
 
         // Execute the token swap
-        uniswapRouter.swapExactTokensForTokens(
+        uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
             IERC20(_tokenIn).balanceOf(address(this)),
-            amount,
+            0,
             path,
             address(this),
             block.timestamp // deadline (5 minutes from now)
