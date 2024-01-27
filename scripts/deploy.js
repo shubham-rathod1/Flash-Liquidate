@@ -12,7 +12,7 @@ const { handleLiquidate } = require('./liquidationBot');
 const logger = require('../logger');
 const getSecret = require('../secrets');
 
-logger.info('This is an information message.');
+logger.info('check logger');
 
 const hre = require('hardhat');
 const LIQUIDATION_THRESHOLD =
@@ -20,108 +20,118 @@ const LIQUIDATION_THRESHOLD =
 const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 
 async function main() {
-  await getSecret();
-  console.log('ENV_VAL_1', process.env.testKey1);
-  console.log('ENV_VAL_2', process.env.testKey2);
-  const UniswapFlashSwap = await hre.ethers.deployContract(
-    'UniswapFlashSwap',
-    []
-  );
-  await UniswapFlashSwap.waitForDeployment();
+  try {
+    await getSecret();
+    console.log('ENV_VAL_1', process.env.testKey1);
+    console.log('ENV_VAL_2', process.env.testKey2);
+    const UniswapFlashSwap = await hre.ethers.deployContract(
+      'UniswapFlashSwap',
+      []
+    );
+    await UniswapFlashSwap.waitForDeployment();
 
-  const accounts = await ethers.getSigners();
-  console.log(accounts[0].address, 'my address!');
+    const accounts = await ethers.getSigners();
+    console.log(accounts[0].address, 'my address!');
 
-  const HelperContract = await hre.ethers.deployContract('helper', []);
-  await HelperContract.waitForDeployment();
+    const HelperContract = await hre.ethers.deployContract('helper', []);
+    await HelperContract.waitForDeployment();
 
-  // const FlashSwapAddress = UniswapFlashSwap.target;
+    // const FlashSwapAddress = UniswapFlashSwap.target;
 
-  console.log(`FlashSwap deployed to ${UniswapFlashSwap.target}`);
-  console.log(`Helper deployed to ${HelperContract.target}`);
+    console.log(`FlashSwap deployed to ${UniswapFlashSwap.target}`);
+    console.log(`Helper deployed to ${HelperContract.target}`);
 
-  const helperContract = await hre.ethers.getContractAt(
-    helperAbi,
-    HelperContract.target
-  );
+    const helperContract = await hre.ethers.getContractAt(
+      helperAbi,
+      HelperContract.target
+    );
 
-  // user data before liquidation
+    const data = await graphData.fetchGraphData(137);
+    // console.log('GRAPH_DATA', data);
 
-  const data = await graphData.fetchGraphData(137);
-  // console.log('GRAPH_DATA', data);
+    const positions = await handleLiquidate.computeLiquidablePositions(
+      data,
+      helperContract
+    );
 
-  const positions = await handleLiquidate.computeLiquidablePositions(
-    data,
-    helperContract
-  );
+    console.log(positions, 'positions!');
 
-  console.log(positions, 'positions!');
-
-  const userData0 = await helperContract.getPoolFullData(
-    '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
-    '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
-    '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
-  );
-
-  console.log(
-    'before liquidation',
-    hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
-    hre.ethers.formatEther(userData0._lendBalance1),
-    hre.ethers.formatEther(1) * 10 ** 18
-  );
-
-  // // Create payload
-  const liquidatePosition = async (position) => {
-    const isToken0 = position.liquidableToken == 'token0';
-    console.log('POSITION_ID', position.id);
-    let payload = [
-      isToken0 ? position.token0.id : position.token1.id,
-      // hre.ethers.formatEther(
-      //   isToken0 ? position.borrowBalance0 : position.borrowBalance1
-      // ) *
-      //   10 ** 18,
-      10 ** 9,
-      position.pool,
-      position.owner,
-      // hre.ethers.formatEther(
-      //   isToken0 ? -position.borrowBalance0 : position.borrowBalance1
-      // ) *
-      //   10 ** 18 ,
-      -(10 ** 6),
-      // `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
-      isToken0 ? position.token1.id : position.token0.id,
-      USER_ADDRESS,
-    ];
-
-    console.log('PAYLOAD: ', payload);
-
-    // profit calculation here
-
-    // execute if profitable
-
-    // check pool liquidity
-
-    const flash = await UniswapFlashSwap.FlashSwap(payload);
-    // user data after liquidation
-
-    const userData = await HelperContract.getPoolFullData(
+    const userData0 = await helperContract.getPoolFullData(
       '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
       '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
       '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
     );
 
     console.log(
-      'after liquidation',
-      hre.ethers.formatEther(userData._borrowBalance0),
-      hre.ethers.formatEther(userData._lendBalance1)
+      'before liquidation',
+      hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
+      hre.ethers.formatEther(userData0._lendBalance1),
+      hre.ethers.formatEther(1) * 10 ** 18
     );
 
-    await flash.wait();
-  };
-  // needs to select one as required
-  // await liquidatePosition(positions[1]);
-  // await Promise.all(positions?.map(liquidatePosition));
-  await Promise.allSettled(positions?.map(liquidatePosition));
+    // // Create payload
+    const liquidatePosition = async (position) => {
+      try {
+        const isToken0 = position.liquidableToken == 'token0';
+        console.log('POSITION_ID', position.id);
+        let payload = [
+          isToken0 ? position.token0.id : position.token1.id,
+          // hre.ethers.formatEther(
+          //   isToken0 ? position.borrowBalance0 : position.borrowBalance1
+          // ) *
+          //   10 ** 18,
+          10 ** 9,
+          position.pool,
+          position.owner,
+          // hre.ethers.formatEther(
+          //   isToken0 ? -position.borrowBalance0 : position.borrowBalance1
+          // ) *
+          //   10 ** 18 ,
+          -(10 ** 6),
+          // `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
+          isToken0 ? position.token1.id : position.token0.id,
+          USER_ADDRESS,
+        ];
+
+        console.log('PAYLOAD: ', payload);
+
+        // profit calculation here
+
+        // execute if profitable
+
+        // check pool liquidity
+
+        const flash = await UniswapFlashSwap.FlashSwap(payload);
+        // user data after liquidation
+
+        const userData = await HelperContract.getPoolFullData(
+          '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
+          '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+          '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
+        );
+
+        console.log(
+          'after liquidation',
+          hre.ethers.formatEther(userData._borrowBalance0),
+          hre.ethers.formatEther(userData._lendBalance1)
+        );
+
+        await flash.wait();
+      } catch (error) {
+        console.error('An error occurred in liquidatePosition:', error);
+        // Handle error as needed, e.g., logging, retrying, etc.
+        // Throw the error again if it should be propagated further.
+        throw error;
+      }
+    };
+    // needs to select one as required
+    // await liquidatePosition(positions[1]);
+    // await Promise.all(positions?.map(liquidatePosition));
+    await Promise.allSettled(positions?.map(liquidatePosition));
+  } catch (error) {
+    console.error('An error occurred:', error);
+    process.exitCode = 1;
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
