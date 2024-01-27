@@ -5,9 +5,13 @@
     "hardhat": "^2.19.0"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.501.0",
     "@openzeppelin/contracts": "^5.0.1",
     "@uniswap/v3-periphery": "^1.4.4",
+    "aws-sdk": "^2.1545.0",
     "axios": "^1.6.5",
-    "bignumber.js": "^4.0.4"
+    "bignumber.js": "^4.0.4",
+    "winston": "^3.11.0",
+    "winston-cloudwatch": "^6.2.0"
   }
 }

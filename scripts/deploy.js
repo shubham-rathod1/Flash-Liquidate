@@ -9,6 +9,10 @@ const helperAbi = require('./abis/helper.json');
 const { graphData } = require('./fetcher');
 const { Constants } = require('./constants');
 const { handleLiquidate } = require('./liquidationBot');
+const logger = require('../logger');
+const getSecret = require('../secrets');
+
+logger.info('This is an information message.');
 
 const hre = require('hardhat');
 const LIQUIDATION_THRESHOLD =
@@ -16,6 +20,9 @@ const LIQUIDATION_THRESHOLD =
 const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 
 async function main() {
+  await getSecret();
+  console.log('ENV_VAL_1', process.env.testKey1);
+  console.log('ENV_VAL_2', process.env.testKey2);
   const UniswapFlashSwap = await hre.ethers.deployContract(
     'UniswapFlashSwap',
     []
@@ -41,7 +48,7 @@ async function main() {
   // user data before liquidation
 
   const data = await graphData.fetchGraphData(137);
-  console.log('GRAPH_DATA', data);
+  // console.log('GRAPH_DATA', data);
 
   const positions = await handleLiquidate.computeLiquidablePositions(
     data,
@@ -66,16 +73,22 @@ async function main() {
   // // Create payload
   const liquidatePosition = async (position) => {
     const isToken0 = position.liquidableToken == 'token0';
-
+    console.log('POSITION_ID', position.id);
     let payload = [
       isToken0 ? position.token0.id : position.token1.id,
-      hre.ethers.formatEther(
-        isToken0 ? position.borrowBalance0 : position.borrowBalance1
-      ) *
-        10 ** 18,
+      // hre.ethers.formatEther(
+      //   isToken0 ? position.borrowBalance0 : position.borrowBalance1
+      // ) *
+      //   10 ** 18,
+      10 ** 9,
       position.pool,
       position.owner,
-      `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
+      // hre.ethers.formatEther(
+      //   isToken0 ? -position.borrowBalance0 : position.borrowBalance1
+      // ) *
+      //   10 ** 18 ,
+      -(10 ** 6),
+      // `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
       isToken0 ? position.token1.id : position.token0.id,
       USER_ADDRESS,
     ];
@@ -89,7 +102,6 @@ async function main() {
     // check pool liquidity
 
     const flash = await UniswapFlashSwap.FlashSwap(payload);
-
     // user data after liquidation
 
     const userData = await HelperContract.getPoolFullData(
@@ -107,6 +119,7 @@ async function main() {
     await flash.wait();
   };
   // needs to select one as required
+  // await liquidatePosition(positions[1]);
   // await Promise.all(positions?.map(liquidatePosition));
   await Promise.allSettled(positions?.map(liquidatePosition));
 }
@@ -117,3 +130,6 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+/// code cleanup
+// secrete manager code?
