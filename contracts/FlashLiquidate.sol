@@ -10,7 +10,7 @@ import "@uniswap/v3-periphery/contracts/base/PeripheryPayments.sol";
 import "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol";
 import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
-// import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import "./lib/interfaces/IUniswapV3Factory.sol";
@@ -64,10 +64,6 @@ contract FlashLiquidate is
         );
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        // address borrowAddress = decoded.amount != 0
-        //     ? decoded.token0
-        //     : decoded.token1;
-
         console.log(decoded.payer, "payer");
 
         console.log(
@@ -99,41 +95,11 @@ contract FlashLiquidate is
             IERC20(decoded.liqToken).balanceOf(address(this))
         );
 
-        // for swaps
+        swapToken(decoded.liqToken, decoded.borrowAddress);
 
-        // IERC20(decoded.liqToken).approve(
-        //     address(swapRouter),
-        //     IERC20(decoded.liqToken).balanceOf(address(this))
-        // );
+        console.log(fee0,fee1, "fee from callback");
 
-        // console.log(
-        //     "check allowance for swaping",
-        //     IERC20(decoded.liqToken).allowance(
-        //         address(this),
-        //         address(swapRouter)
-        //     )
-        // );
-
-        // uint256 amountOut0 = swapRouter.exactInputSingle(
-        //      ISwapRouter.ExactInputSingleParams({
-        //         tokenIn: decoded.liqToken,
-        //         tokenOut: decoded.borrowAddress,
-        //         fee: 3000,
-        //         recipient: address(this),
-        //         deadline: block.timestamp,
-        //         amountIn: IERC20(decoded.liqToken).balanceOf(address(this)),
-        //         amountOutMinimum: 0,
-        //         sqrtPriceLimitX96: 0
-        //     })
-        // );
-
-        swapToken(decoded.liqToken, decoded.borrowAddress, decoded.pair);
-
-        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0);
-        // uint256 amount1Owed = LowGasSafeMath.add(decoded.amount1, fee1);
-
-        // TransferHelper.safeApprove(decoded.borrowAddress, address(this), amountOwed);
-        // TransferHelper.safeApprove(decoded.token1, address(this), amount1Owed);
+        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee1);
 
         console.log("amountOwed", amountOwed);
 
@@ -145,6 +111,9 @@ contract FlashLiquidate is
             );
             pay(decoded.borrowAddress, address(this), msg.sender, amountOwed);
         }
+        // pay profit to user
+        address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        TransferHelper.safeTransfer(decoded.borrowAddress, user, IERC20(decoded.borrowAddress).balanceOf(address(this)));
     }
 
     struct FlashParams {
@@ -243,38 +212,43 @@ contract FlashLiquidate is
         );
     }
 
-    function swapToken(address tokenIn, address tokenOut, address pair) public {
+    function swapToken(
+        address tokenIn,
+        address tokenOut
+    ) internal returns (uint256 amountOut) {
         uint amountIn = IERC20(tokenIn).balanceOf(address(this));
 
-        IERC20(tokenIn).approve(address(swapRouter), amountIn);
-        IERC20(tokenIn).approve(address(0xB46388F104FF88AAC68626a316AAF3A924f32055), amountIn);
-
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
         console.log(
             "check allowance for swaping",
-            IERC20(tokenIn).allowance(address(this), address(swapRouter)),
-            IERC20(tokenIn).allowance(address(this), address(0xB46388F104FF88AAC68626a316AAF3A924f32055))
+            IERC20(tokenIn).allowance(address(this), address(swapRouter))
         );
 
-        swapRouter.exactInput(
-            ISwapRouter.ExactInputParams({
+        uint24 poolFee1 = 3000;
+        uint24 poolFee2 = 10000;
+
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
                 path: abi.encodePacked(
                     tokenIn,
-                    "10000",
+                    poolFee1,
                     WETH9,
-                    "10000",
+                    poolFee2,
                     tokenOut
                 ),
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: 0
-            })
-        );
+            });
 
-        // console.log(
-        //     "amount after swap",
-        //     IERC20(tokenOut).balanceOf(address(this)),
-        //     IERC20(tokenIn).balanceOf(address(this))
-        // );
+        // Executes the swap.
+        amountOut = swapRouter.exactInput(params);
+
+        console.log(
+            "amount after swap",
+            IERC20(tokenOut).balanceOf(address(this)),
+            IERC20(tokenIn).balanceOf(address(this))
+        );
     }
 }

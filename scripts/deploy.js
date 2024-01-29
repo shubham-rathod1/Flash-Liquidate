@@ -20,8 +20,8 @@ async function main() {
 
   const flash = await FlashLiquidate.initFlash([
     '0x172370d5cd63279efa6d502dab29171933a610af',
-    10000,
-    10000000,
+    3000,
+    30000000,
     '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
     '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601',
     '0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a',
