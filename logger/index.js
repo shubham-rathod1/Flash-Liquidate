@@ -11,8 +11,6 @@ const logger = winston.createLogger({
     new WinstonCloudWatch({
       logGroupName: 'testLog',
       logStreamName: 'testStream',
-      //   awsAccessKeyId: 'AKIASM7M4YUJIGQ2R2DJ',
-      //   awsSecretKey: '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',
       awsAccessKeyId: process.env.ACCESS_KEY,
       awsSecretKey: process.env.SECRET_ACCESS_KEY,
       awsRegion: process.env.AWS_REGION,

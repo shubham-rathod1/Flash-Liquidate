@@ -119,6 +119,7 @@ async function main() {
         await flash.wait();
       } catch (error) {
         console.error('An error occurred in liquidatePosition:', error);
+        logger.error('An error occurred in liquidatePosition:', error);
         // Handle error as needed, e.g., logging, retrying, etc.
         // Throw the error again if it should be propagated further.
         throw error;
@@ -130,6 +131,7 @@ async function main() {
     await Promise.allSettled(positions?.map(liquidatePosition));
   } catch (error) {
     console.error('An error occurred:', error);
+    logger.error('An error occurred:', error);
     process.exitCode = 1;
   }
 }
