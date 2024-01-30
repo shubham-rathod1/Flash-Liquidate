@@ -1,6 +1,6 @@
 node_modules
 .env
-package-lock
+package-lock.json
 .vscode
 
 # Hardhat files
