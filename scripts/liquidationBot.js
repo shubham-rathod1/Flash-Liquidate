@@ -4,12 +4,6 @@ const hre = require('hardhat');
 
 const computeLiquidablePositions = async (graphData, contract) => {
   try {
-    // const helper = getContractInstance(
-    //   helperAbi,
-    //   Constants.chainData[chain].helperAddress,
-    //   web3
-    // );
-    // console.log(helper, chain, 'this is helper');
     const result = await Promise.all(
       graphData.map(async (item) =>
         contract.getPoolFullData(
@@ -19,7 +13,6 @@ const computeLiquidablePositions = async (graphData, contract) => {
         )
       )
     );
-    console.log(result, 'this is result');
     let newArray = [];
     for (let i = 0; i < graphData.length; i++) {
       const canLiquidate =
@@ -50,7 +43,7 @@ const computeLiquidablePositions = async (graphData, contract) => {
         newArray.push(payload);
       }
     }
-
+    console.log(newArray, "my positions");
     return newArray;
   } catch (error) {
     console.log(error);

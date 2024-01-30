@@ -1,5 +1,5 @@
-const coreAddress = '0xA9d39A0088466cbbB66266dB6C449f2645AF11c4';
-const positionContract = "0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe";
+const coreAddress = '0xA7261e3cda9A4E2C81a82791DA6f2aaAA10A3cb3';
+const positionContract = "0x2EafE683A4c65B03C9b7315881704Ace33936322";
 const flashLiquidate = "";
 
 const HelperAddress = '0x1aaeF1b135691491f49b1029d2BDC52de4521f10';

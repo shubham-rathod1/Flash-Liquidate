@@ -4,6 +4,7 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
+
 var BigNumber = require('bignumber.js');
 const helperAbi = require('./abis/helper.json');
 const { graphData } = require('./fetcher');
@@ -53,6 +54,8 @@ async function main() {
       data,
       helperContract
     );
+
+    // console.log(positions,"user liquidable position");
 
     const userData0 = await helperContract.getPoolFullData(
       '0x014f8d8F4A5B37B8b6217232cffd5d376Ec82209',
