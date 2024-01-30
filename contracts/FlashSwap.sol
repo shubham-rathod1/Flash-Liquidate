@@ -1,164 +1,204 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.7.6;
+pragma abicoder v2;
 
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
+import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./lib/interfaces/Uniswap.sol";
+import "@uniswap/v3-periphery/contracts/base/PeripheryPayments.sol";
+import "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
+import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "./lib/interfaces/IUniswapV3Factory.sol";
+    
 import "hardhat/console.sol";
 
-contract UniswapFlashSwap is IUniswapV2Callee {
-    using SafeERC20 for IERC20;
+interface IUnilendV2Core {
+    function liquidate(
+        address _pool,
+        address _for,
+        int256 _amount,
+        address _receiver,
+        bool uPosition
+    ) external returns (int256 payAmount);
+}
 
-    address private constant WETH = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+contract FlashLiquidate is
+    IUniswapV3FlashCallback,
+    PeripheryImmutableState,
+    PeripheryPayments
+{
+    using LowGasSafeMath for uint256;
+    using LowGasSafeMath for int256;
+
+    ISwapRouter public immutable swapRouter;
+    IUniswapV3Factory public immutable factoryAddress;
+    IUnilendV2Core public immutable unilendCore;
+
     address private constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
-    address private constant FACTORY =
-        0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
-    address private constant UNILEDV2_CORE =
-        0xA9d39A0088466cbbB66266dB6C449f2645AF11c4;
-    address private constant UNISWAP_ROUTER =
-        0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
 
-    // address public user = 0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601;
-
-    IUniswapV2Router02 public uniswapRouter;
-    IUnilendV2Core public unilendCore;
-    IUniswapV2Factory public uniswapFactory;
-
-    event Log(string message, uint256 val);
-    struct SwapData {
-        address tokenBorrow;
-        uint256 amount;
-        address pool;
-        address _for;
-        int256 liquidationAmount;
-        address liqAddress;
-        address user;
+    constructor(
+        ISwapRouter _swapRouter,
+        address _factory,
+        address _WETH9,
+        IUnilendV2Core _unilendCore
+    ) PeripheryImmutableState(_factory, _WETH9) {
+        swapRouter = _swapRouter;
+        unilendCore = _unilendCore;
+        factoryAddress = IUniswapV3Factory(_factory);
     }
 
-    constructor() {
-        uniswapRouter = IUniswapV2Router02(UNISWAP_ROUTER);
-        unilendCore = IUnilendV2Core(UNILEDV2_CORE);
-        uniswapFactory = IUniswapV2Factory(FACTORY);
-    }
-
-    function FlashSwap(SwapData memory args) external {
-        // Get Uniswap Pair
-        address pair = uniswapFactory.getPair(args.tokenBorrow, USDT);
-        require(pair != address(0), "Pair not Found!");
-
-        // Get Token Addresses
-        address token0 = IUniswapV2Pair(pair).token0();
-        address token1 = IUniswapV2Pair(pair).token1();
-        uint256 amount0Out = args.tokenBorrow == token0 ? args.amount : 0;
-        uint256 amount1Out = args.tokenBorrow == token1 ? args.amount : 0;
-
-        // Encode data for uniswapV2Call
-        bytes memory data = abi.encode(
-            args.tokenBorrow,
-            args.amount,
-            args.pool,
-            args._for,
-            args.liquidationAmount,
-            args.liqAddress,
-            args.user
-        );
-
-        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), data);
-        emit Log(
-            "Token Borrowed",
-            IERC20(args.tokenBorrow).balanceOf(address(this))
-        );
-    }
-
-    // called by pair contract
-    function uniswapV2Call(
-        address _sender,
-        uint256 _amount0,
-        uint256 _amount1,
-        bytes calldata _data
+    function uniswapV3FlashCallback(
+        uint256 fee0,
+        uint256 fee1,
+        bytes calldata data
     ) external override {
-        address token0 = IUniswapV2Pair(msg.sender).token0();
-        address token1 = IUniswapV2Pair(msg.sender).token1();
-        address pair = IUniswapV2Factory(FACTORY).getPair(token0, token1);
-        require(msg.sender == pair, "Pair is not the Sender");
-        require(_sender == address(this), "!Sender");
+        FlashCallbackData memory decoded = abi.decode(
+            data,
+            (FlashCallbackData)
+        );
+        CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        // decode callback data
-        (
-            address tokenBorrow,
-            uint256 amount,
-            address pool,
-            address _for,
-            int256 liquidationAmount,
-            address liqAddress,
-            address user
-        ) = abi.decode(
-                _data,
-                (address, uint256, address, address, int256, address, address)
-            );
+        console.log(decoded.payer, "payer");
 
-        // about 0.3%
-        uint256 fee = ((amount * 3) / 997) + 1;
-        uint256 amountToRepay = amount + fee;
+        console.log(
+            "loan amount",
+            IERC20(decoded.borrowAddress).balanceOf(address(this))
+        );
 
-        // console.log(amountToRepay, "amount needed to repay!");
+        IERC20(decoded.borrowAddress).approve(
+            address(unilendCore),
+            decoded.amount
+        );
 
-        IERC20(tokenBorrow).approve(UNILEDV2_CORE, 115792089237316195423570985008687907853269984665640564039457584007913129639935);
+        console.log(
+            "check allowance",
+            IERC20(decoded.borrowAddress).allowance(
+                0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601,
+                address(unilendCore)
+            )
+        );
 
-        // console.log(
-        //     "borrow token and collateral token balance befor liq",
-        //      IERC20(tokenBorrow).balanceOf(address(this)),IERC20(liqAddress).balanceOf(address(this))
-        // );
+        Liquidate(
+            decoded.unilendPool,
+            decoded.positionOwner,
+            int(decoded.amount)
+        );
 
-        Liquidate(pool, _for, pair, liquidationAmount);
-
-        //  console.log(
-        //     "borrow token and collateral token balance after liq",
-        //      IERC20(tokenBorrow).balanceOf(address(this)),IERC20(liqAddress).balanceOf(address(this))
-        // );
-
-        emit Log(
+        console.log(
             "Liquidated Successfully",
-            IERC20(liqAddress).balanceOf(address(this))
+            IERC20(decoded.liqToken).balanceOf(address(this))
         );
 
-        swapTokens(liqAddress, tokenBorrow, pair, amountToRepay);
+        swapToken(decoded.liqToken, decoded.borrowAddress);
 
-        emit Log(
-            "After successful swap",
-            IERC20(tokenBorrow).balanceOf(address(this))
+        console.log(fee0,fee1, "fee from callback");
+
+        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee1);
+
+        console.log("amountOwed", amountOwed);
+
+        if (amountOwed > 0) {
+            require(
+                IERC20(decoded.borrowAddress).balanceOf(address(this)) >
+                    amountOwed,
+                "not enough to pay loan fee!"
+            );
+            pay(decoded.borrowAddress, address(this), msg.sender, amountOwed);
+        }
+        // pay profit to user
+        address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        TransferHelper.safeTransfer(decoded.borrowAddress, user, IERC20(decoded.borrowAddress).balanceOf(address(this)));
+    }
+
+    struct FlashParams {
+        address tokenBorrow;
+        uint24 fee;
+        uint256 amount;
+        address unilendPool;
+        address positionOwner;
+        address liqToken;
+    }
+
+    struct FlashCallbackData {
+        uint256 amount;
+        address borrowAddress;
+        address payer;
+        PoolAddress.PoolKey poolKey;
+        address pair;
+        address unilendPool;
+        address positionOwner;
+        address liqToken;
+    }
+
+    function initFlash(FlashParams memory params) external {
+        address pair = factoryAddress.getPool(
+            WETH9,
+            params.tokenBorrow,
+            params.fee
         );
-        // console.log(
-        //     "swapped successfully",
-        //     IERC20(tokenBorrow).balanceOf(address(this))
-        // );
-        // check if it is profitable;
-        require(
-            amountToRepay <= IERC20(tokenBorrow).balanceOf(address(this)),
-            "Transaction not Profitable / Not enought to payback loan"
+        require(pair != address(0), "Pair not found");
+        console.log(pair, "pair found");
+
+        uint256 liquidity = IUniswapV3Pool(pair).liquidity();
+
+        require(liquidity >= params.amount, "not enough liquidity");
+
+        address token0 = IUniswapV3Pool(pair).token0();
+        address token1 = IUniswapV3Pool(pair).token1();
+
+        console.log(token0, token1, "these are token0 and token1");
+
+        uint256 amount0Out = params.tokenBorrow == token0 ? params.amount : 0;
+        uint256 amount1Out = params.tokenBorrow == token1 ? params.amount : 0;
+
+        PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({
+            token0: token0,
+            token1: token1,
+            fee: params.fee
+        });
+
+        // console.log(poolKey, "poolKey");
+
+        IUniswapV3Pool pool = IUniswapV3Pool(
+            PoolAddress.computeAddress(factory, poolKey)
         );
-        // payback flashloan
-        IERC20(tokenBorrow).safeTransfer(pair, amountToRepay);
 
-        uint256 remaining_Bal = IERC20(tokenBorrow).balanceOf(address(this));
+        // console.log(pair, "poolKey");
 
-        // transfer bonus to liquidator
-        IERC20(tokenBorrow).safeTransfer(user, remaining_Bal);
+        console.log(
+            "loan amount before",
+            IERC20(params.tokenBorrow).balanceOf(address(this))
+        );
 
-        emit Log("Transfered to Liquidator", remaining_Bal);
-        // console.log(
-        //     "user Balance after liq",
-        //     IERC20(tokenBorrow).balanceOf(user)
-        // );
+        pool.flash(
+            address(this),
+            amount0Out,
+            amount1Out,
+            abi.encode(
+                FlashCallbackData({
+                    amount: params.amount,
+                    borrowAddress: params.tokenBorrow,
+                    payer: msg.sender,
+                    poolKey: poolKey,
+                    pair: pair,
+                    unilendPool: params.unilendPool,
+                    positionOwner: params.positionOwner,
+                    liqToken: params.liqToken
+                })
+            )
+        );
     }
 
     function Liquidate(
         address _pool,
         address _for,
-        address _pair,
-        int _liquidationAmount
+        // address _pair,
+        int256 _liquidationAmount
     ) private {
-        require(msg.sender == _pair, "Sender is not Pair");
+        // require(msg.sender == _pair, "Sender is not Pair");
 
         unilendCore.liquidate(
             _pool,
@@ -169,34 +209,43 @@ contract UniswapFlashSwap is IUniswapV2Callee {
         );
     }
 
-    function swapTokens(
-        address _tokenIn,
-        address _tokenOut,
-        address _pair,
-        uint amount
-    ) private {
-        require(msg.sender == _pair, "Sender is not Pair");
+    function swapToken(
+        address tokenIn,
+        address tokenOut
+    ) internal returns (uint256 amountOut) {
+        uint amountIn = IERC20(tokenIn).balanceOf(address(this));
 
-        IERC20(_tokenIn).approve(
-            UNISWAP_ROUTER,
-            IERC20(_tokenIn).balanceOf(address(this))
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
+        console.log(
+            "check allowance for swaping",
+            IERC20(tokenIn).allowance(address(this), address(swapRouter))
         );
 
-        // Define the token path for the swap
-        address[] memory path = new address[](3);
-        path[0] = _tokenIn;
-        path[1] = WETH;
-        path[2] = _tokenOut;
+        uint24 poolFee1 = 3000;
+        uint24 poolFee2 = 10000;
 
-        // console.log(IERC20(_tokenIn).balanceOf(address(this)), "input amount");
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
+                path: abi.encodePacked(
+                    tokenIn,
+                    poolFee1,
+                    WETH9,
+                    poolFee2,
+                    tokenOut
+                ),
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0
+            });
 
-        // Execute the token swap
-        uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            IERC20(_tokenIn).balanceOf(address(this)),
-            0,
-            path,
-            address(this),
-            block.timestamp // deadline (5 minutes from now)
+        // Executes the swap.
+        amountOut = swapRouter.exactInput(params);
+
+        console.log(
+            "amount after swap",
+            IERC20(tokenOut).balanceOf(address(this)),
+            IERC20(tokenIn).balanceOf(address(this))
         );
     }
 }

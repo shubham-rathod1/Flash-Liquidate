@@ -22,13 +22,17 @@ const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 async function main() {
   try {
     await getSecret();
-    console.log('ENV_VAL_1', process.env.testKey1);
-    console.log('ENV_VAL_2', process.env.testKey2);
-    const UniswapFlashSwap = await hre.ethers.deployContract(
-      'UniswapFlashSwap',
-      []
-    );
-    await UniswapFlashSwap.waitForDeployment();
+    // console.log('ENV_VAL_1', process.env.testKey1);
+    // console.log('ENV_VAL_2', process.env.testKey2);
+
+    const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
+      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+      '0x1F98431c8aD98523631AE4a59f267346ea31F984',
+      '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+      '0xE1CA60c8A97b0cC0F444f5e15940E91a1d3feedF',
+    ]);
+    await FlashLiquidate.waitForDeployment();
+    // const FlashSwapAddress = UniswapFlashSwap.target;
 
     const accounts = await ethers.getSigners();
     console.log(accounts[0].address, 'my address!');
@@ -38,7 +42,7 @@ async function main() {
 
     // const FlashSwapAddress = UniswapFlashSwap.target;
 
-    console.log(`FlashSwap deployed to ${UniswapFlashSwap.target}`);
+    console.log(`FlashSwap deployed to ${FlashLiquidate.target}`);
     console.log(`Helper deployed to ${HelperContract.target}`);
 
     const helperContract = await hre.ethers.getContractAt(
@@ -57,8 +61,8 @@ async function main() {
     console.log(positions, 'positions!');
 
     const userData0 = await helperContract.getPoolFullData(
-      '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
-      '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+      '0x014f8d8F4A5B37B8b6217232cffd5d376Ec82209',
+      '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
       '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
     );
 
@@ -101,12 +105,12 @@ async function main() {
 
         // check pool liquidity
 
-        const flash = await UniswapFlashSwap.FlashSwap(payload);
+        const flash = await FlashLiquidate.initFlash(payload);
         // user data after liquidation
 
         const userData = await HelperContract.getPoolFullData(
-          '0x864058b2fa9033D84Bc0cd6B92c88a697e2ac0fe',
-          '0x59f5ef33a521ac871d3040cb03c0d0f7e60076a2',
+          '0x014f8d8F4A5B37B8b6217232cffd5d376Ec82209',
+          '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
           '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
         );
 
