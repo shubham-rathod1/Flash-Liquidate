@@ -65,8 +65,8 @@ async function main() {
 
     console.log(
       'before liquidation',
-      hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
-      hre.ethers.formatEther(userData0._lendBalance1),
+      hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance1)),
+      hre.ethers.formatEther(userData0._lendBalance0),
       hre.ethers.formatEther(1) * 10 ** 18
     );
     const liquidatePosition = async (position) => {
@@ -121,8 +121,8 @@ async function main() {
 
         console.log(
           'after liquidation',
-          hre.ethers.formatEther(userData._borrowBalance0),
-          hre.ethers.formatEther(userData._lendBalance1)
+          hre.ethers.formatEther(userData._borrowBalance1),
+          hre.ethers.formatEther(userData._lendBalance0)
         );
 
         await flash.wait();
