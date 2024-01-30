@@ -12,7 +12,8 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "./lib/interfaces/IUniswapV3Factory.sol";
-    
+import "./lib/interfaces/IUnilendV2Pool.sol";
+
 import "hardhat/console.sol";
 
 interface IUnilendV2Core {
@@ -73,10 +74,11 @@ contract FlashLiquidate is
             decoded.amount
         );
 
+
         console.log(
             "check allowance",
             IERC20(decoded.borrowAddress).allowance(
-                0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601,
+                address(this),
                 address(unilendCore)
             )
         );
@@ -94,9 +96,9 @@ contract FlashLiquidate is
 
         swapToken(decoded.liqToken, decoded.borrowAddress);
 
-        console.log(fee0,fee1, "fee from callback");
+        console.log(fee0, fee1, "fee from callback");
 
-        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee1);
+        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0);
 
         console.log("amountOwed", amountOwed);
 
@@ -110,7 +112,15 @@ contract FlashLiquidate is
         }
         // pay profit to user
         address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-        TransferHelper.safeTransfer(decoded.borrowAddress, user, IERC20(decoded.borrowAddress).balanceOf(address(this)));
+        TransferHelper.safeTransfer(
+            decoded.borrowAddress,
+            user,
+            IERC20(decoded.borrowAddress).balanceOf(address(this))
+        );
+        console.log(
+            IERC20(decoded.borrowAddress).balanceOf(user),
+            "user got credited with profit"
+        );
     }
 
     struct FlashParams {
@@ -166,13 +176,7 @@ contract FlashLiquidate is
             PoolAddress.computeAddress(factory, poolKey)
         );
 
-        // console.log(pair, "poolKey");
-
-        console.log(
-            "loan amount before",
-            IERC20(params.tokenBorrow).balanceOf(address(this))
-        );
-
+        
         pool.flash(
             address(this),
             amount0Out,
@@ -195,7 +199,6 @@ contract FlashLiquidate is
     function Liquidate(
         address _pool,
         address _for,
-        // address _pair,
         int256 _liquidationAmount
     ) private {
         // require(msg.sender == _pair, "Sender is not Pair");
@@ -203,7 +206,7 @@ contract FlashLiquidate is
         unilendCore.liquidate(
             _pool,
             _for,
-            _liquidationAmount,
+            -_liquidationAmount,
             address(this),
             false
         );
