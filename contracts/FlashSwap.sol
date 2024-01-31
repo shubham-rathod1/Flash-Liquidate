@@ -71,7 +71,7 @@ contract FlashLiquidate is
 
         IERC20(decoded.borrowAddress).approve(
             address(unilendCore),
-            decoded.amount
+            57896044618658097711785492504343953926634992332820282019728792003956564819967
         );
 
 
@@ -82,6 +82,8 @@ contract FlashLiquidate is
                 address(unilendCore)
             )
         );
+
+        console.log(decoded.amount,"liquidaton amoutn");
 
         Liquidate(
             decoded.unilendPool,
@@ -175,7 +177,6 @@ contract FlashLiquidate is
         IUniswapV3Pool pool = IUniswapV3Pool(
             PoolAddress.computeAddress(factory, poolKey)
         );
-
         
         pool.flash(
             address(this),
@@ -203,10 +204,12 @@ contract FlashLiquidate is
     ) private {
         // require(msg.sender == _pair, "Sender is not Pair");
 
+        // console.log(_liquidationAmount,"liquyidation");
+
         unilendCore.liquidate(
             _pool,
             _for,
-            -_liquidationAmount,
+            -57896044618658097711785492504343953926634992332820282019728792003956564819967,
             address(this),
             false
         );

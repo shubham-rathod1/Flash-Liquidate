@@ -57,18 +57,18 @@ async function main() {
 
     // console.log(positions,"user liquidable position");
 
-    // const userData0 = await helperContract.getPoolFullData(
-    //   '0x014f8d8F4A5B37B8b6217232cffd5d376Ec82209',
-    //   '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
-    //   '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
-    // );
+    const userData0 = await helperContract.getPoolFullData(
+      '0x2EafE683A4c65B03C9b7315881704Ace33936322',
+      '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
+      '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
+    );
 
-    // console.log(
-    //   'before liquidation',
-    //   hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
-    //   hre.ethers.formatEther(userData0._lendBalance1),
-    //   hre.ethers.formatEther(1) * 10 ** 18
-    // );
+    console.log(
+      'before liquidation',
+      hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
+      hre.ethers.formatEther(userData0._lendBalance1),
+      hre.ethers.formatEther(1) * 10 ** 18
+    );
     const liquidatePosition = async (position) => {
       try {
         const isToken0 = position.liquidableToken == 'token0';
@@ -80,18 +80,11 @@ async function main() {
           hre.ethers.formatEther(
             isToken0 ? position.borrowBalance0 : position.borrowBalance1
           ) *
-            10 ** 18,
+            10 ** 18 + 100000000,
           // position.borrowBalance0,
           position.pool,
           position.owner,
-          // hre.ethers.formatEther(
-          //   isToken0 ? -position.borrowBalance0 : position.borrowBalance1
-          // ) *
-          //   10 ** 18 ,
-          // -(10 ** 6),
-          // `${isToken0 ? '-' : ''}${LIQUIDATION_THRESHOLD}`,
           isToken0 ? position.token1.id : position.token0.id,
-          // USER_ADDRESS,
         ];
         // let payload = [
         //   '0x172370d5cd63279efa6d502dab29171933a610af',
@@ -110,20 +103,13 @@ async function main() {
 
         // check pool liquidity
 
-        const flash = await FlashLiquidate.initFlash([
-          '0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a',
-          3000,
-          10000000,
-          '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
-          '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3',
-          '0x172370d5cd63279efa6d502dab29171933a610af',
-        ]);
+        const flash = await FlashLiquidate.initFlash(payload);
         // user data after liquidation
 
         const userData = await HelperContract.getPoolFullData(
-          '0x014f8d8F4A5B37B8b6217232cffd5d376Ec82209',
-          '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
-          '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601'
+          '0x2EafE683A4c65B03C9b7315881704Ace33936322',
+          '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
+          '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
         );
 
         console.log(
