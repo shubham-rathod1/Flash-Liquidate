@@ -67,7 +67,8 @@ async function main() {
       'before liquidation',
       hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
       hre.ethers.formatEther(userData0._lendBalance1),
-      hre.ethers.formatEther(1) * 10 ** 18
+      userData0._healthFactor0, userData0._healthFactor1
+      // hre.ethers.formatEther(1) * 10 ** 18
     );
     const liquidatePosition = async (position) => {
       try {
@@ -80,11 +81,15 @@ async function main() {
           hre.ethers.formatEther(
             isToken0 ? position.borrowBalance0 : position.borrowBalance1
           ) *
-            10 ** 18 + 100000000,
+            10 ** 18 +
+            100000000,
           // position.borrowBalance0,
           position.pool,
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
+          isToken0
+            ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
+            : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
         ];
         // let payload = [
         //   '0x172370d5cd63279efa6d502dab29171933a610af',
@@ -102,23 +107,28 @@ async function main() {
         // execute if profitable
 
         // check pool liquidity
-
+        console.log(
+          `--------------started Liquidation for position${position.id}------------------`
+        );
         const flash = await FlashLiquidate.initFlash(payload);
         // user data after liquidation
+        console.log(
+          `--------------completed Liquidation for position${position.id}------------------`
+        );
 
         const userData = await HelperContract.getPoolFullData(
           '0x2EafE683A4c65B03C9b7315881704Ace33936322',
           '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
           '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
         );
+        // await flash.wait();
 
         console.log(
           'after liquidation',
           hre.ethers.formatEther(userData._borrowBalance0),
-          hre.ethers.formatEther(userData._lendBalance1)
+          hre.ethers.formatEther(userData._lendBalance1),
+          userData._healthFactor0, userData._healthFactor1
         );
-
-        await flash.wait();
       } catch (error) {
         console.error('An error occurred in liquidatePosition:', error);
         logger.error('An error occurred in liquidatePosition:', error);
@@ -127,7 +137,10 @@ async function main() {
     // needs to select one as required
     // await liquidatePosition(positions[0]);
     // await Promise.all(positions?.map(liquidatePosition));
+    let x = Date.now();
+    console.time("promise stated");
     await Promise.allSettled(positions?.map(liquidatePosition));
+    console.timeEnd("promise stated");
   } catch (error) {
     console.error('An error occurred:', error);
     logger.error('An error occurred:', error);

@@ -85,10 +85,16 @@ contract FlashLiquidate is
 
         console.log(decoded.amount,"liquidaton amoutn");
 
+        address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        console.log(
+            IERC20(decoded.borrowAddress).balanceOf(user),
+            "user balance before liquidation"
+        );
+
         Liquidate(
             decoded.unilendPool,
             decoded.positionOwner,
-            int(decoded.amount)
+            decoded.liqAmount
         );
 
         console.log(
@@ -100,11 +106,12 @@ contract FlashLiquidate is
 
         console.log(fee0, fee1, "fee from callback");
 
-        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0);
+        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0 >0 ? fee0: fee1);
 
         console.log("amountOwed", amountOwed);
 
         if (amountOwed > 0) {
+            console.log("payback condition ran");
             require(
                 IERC20(decoded.borrowAddress).balanceOf(address(this)) >
                     amountOwed,
@@ -113,7 +120,6 @@ contract FlashLiquidate is
             pay(decoded.borrowAddress, address(this), msg.sender, amountOwed);
         }
         // pay profit to user
-        address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
         TransferHelper.safeTransfer(
             decoded.borrowAddress,
             user,
@@ -132,6 +138,7 @@ contract FlashLiquidate is
         address unilendPool;
         address positionOwner;
         address liqToken;
+        int256 liqAmount;
     }
 
     struct FlashCallbackData {
@@ -143,6 +150,7 @@ contract FlashLiquidate is
         address unilendPool;
         address positionOwner;
         address liqToken;
+        int256 liqAmount;
     }
 
     function initFlash(FlashParams memory params) external {
@@ -191,7 +199,8 @@ contract FlashLiquidate is
                     pair: pair,
                     unilendPool: params.unilendPool,
                     positionOwner: params.positionOwner,
-                    liqToken: params.liqToken
+                    liqToken: params.liqToken,
+                    liqAmount: params.liqAmount
                 })
             )
         );
@@ -209,7 +218,7 @@ contract FlashLiquidate is
         unilendCore.liquidate(
             _pool,
             _for,
-            -57896044618658097711785492504343953926634992332820282019728792003956564819967,
+            _liquidationAmount,
             address(this),
             false
         );
