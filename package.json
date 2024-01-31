@@ -7,11 +7,12 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.501.0",
     "@openzeppelin/contracts": "^3.4.0",
-    "@uniswap/v3-periphery": "^1.0.1",
     "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.0.1",
     "aws-sdk": "^2.1545.0",
     "axios": "^1.6.5",
     "bignumber.js": "^4.0.4",
+    "dotenv": "^16.4.1",
     "winston": "^3.11.0",
     "winston-cloudwatch": "^6.2.0"
   }
