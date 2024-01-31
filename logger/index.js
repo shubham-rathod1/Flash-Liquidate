@@ -1,5 +1,6 @@
 const winston = require('winston');
 const WinstonCloudWatch = require('winston-cloudwatch');
+require('dotenv').config();
 
 // Configure Winston logger
 const logger = winston.createLogger({
@@ -11,8 +12,8 @@ const logger = winston.createLogger({
     new WinstonCloudWatch({
       logGroupName: 'testLog',
       logStreamName: 'testStream',
-      awsAccessKeyId: process.env.ACCESS_KEY,
-      awsSecretKey: process.env.SECRET_ACCESS_KEY,
+      awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY,
       awsRegion: process.env.AWS_REGION,
     }),
   ],
