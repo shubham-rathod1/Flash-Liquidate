@@ -12,6 +12,7 @@ const { Constants } = require('./constants');
 const { handleLiquidate } = require('./liquidationBot');
 const logger = require('../logger');
 const getSecret = require('../secrets');
+require('dotenv').config();
 
 logger.info('check logger');
 
@@ -63,16 +64,21 @@ async function main() {
       '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
     );
 
-    console.log(
-      'before liquidation',
-      hre.ethers.parseEther(hre.ethers.formatEther(userData0._borrowBalance0)),
-      hre.ethers.formatEther(userData0._lendBalance1),
-      userData0._healthFactor0, userData0._healthFactor1
-      // hre.ethers.formatEther(1) * 10 ** 18
-    );
     const liquidatePosition = async (position) => {
       try {
         const isToken0 = position.liquidableToken == 'token0';
+        console.log(
+          'before liquidation',
+          hre.ethers.formatEther(
+            isToken0 ? userData0._borrowBalance0 : userData0._borrowBalance1
+          ),
+          hre.ethers.formatEther(
+            isToken0 ? userData0._lendBalance1 : userData0._lendBalance0
+          ),
+          userData0._healthFactor0,
+          userData0._healthFactor1
+          // hre.ethers.formatEther(1) * 10 ** 18
+        );
         console.log('POSITION_ID', position.id);
         let payload = [
           isToken0 ? position.token0.id : position.token1.id,
@@ -88,8 +94,8 @@ async function main() {
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
           isToken0
-            ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
-            : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
+            ? -57896044618658097711785492504343953926634992332820282019728792003956564819967n
+            : 57896044618658097711785492504343953926634992332820282019728792003956564819967n,
         ];
         // let payload = [
         //   '0x172370d5cd63279efa6d502dab29171933a610af',
@@ -101,6 +107,7 @@ async function main() {
         // ];
 
         console.log('PAYLOAD: ', payload);
+        935503348411897798n;
 
         // profit calculation here
 
@@ -125,9 +132,14 @@ async function main() {
 
         console.log(
           'after liquidation',
-          hre.ethers.formatEther(userData._borrowBalance0),
-          hre.ethers.formatEther(userData._lendBalance1),
-          userData._healthFactor0, userData._healthFactor1
+          hre.ethers.formatEther(
+            isToken0 ? userData._borrowBalance0 : userData._borrowBalance1
+          ),
+          hre.ethers.formatEther(
+            isToken0 ? userData._lendBalance1 : userData._lendBalance0
+          ),
+          userData._healthFactor0,
+          userData._healthFactor1
         );
       } catch (error) {
         console.error('An error occurred in liquidatePosition:', error);
@@ -135,12 +147,13 @@ async function main() {
       }
     };
     // needs to select one as required
-    // await liquidatePosition(positions[0]);
-    // await Promise.all(positions?.map(liquidatePosition));
     let x = Date.now();
-    console.time("promise stated");
-    await Promise.allSettled(positions?.map(liquidatePosition));
-    console.timeEnd("promise stated");
+    console.time('promise stated');
+    // await Promise.all(positions?.map(liquidatePosition));
+    await liquidatePosition(positions[0]);
+    if (positions[1]) await liquidatePosition(positions[1]);
+    // await Promise.allSettled(positions?.map(liquidatePosition));
+    console.timeEnd('promise stated');
   } catch (error) {
     console.error('An error occurred:', error);
     logger.error('An error occurred:', error);
@@ -154,6 +167,16 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+function runDelay() {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+  setTimeout(runDelay, process.env.DELAY * 1000);
+}
+
+// runDelay();
 
 /// code cleanup
 // secrete manager code?
