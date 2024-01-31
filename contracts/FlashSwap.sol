@@ -106,7 +106,7 @@ contract FlashLiquidate is
 
         console.log(fee0, fee1, "fee from callback");
 
-        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0 >0 ? fee0: fee1);
+        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0 > 0 ? fee0: fee1);
 
         console.log("amountOwed", amountOwed);
 
