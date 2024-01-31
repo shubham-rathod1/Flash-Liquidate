@@ -84,27 +84,19 @@ async function main() {
           isToken0 ? position.token0.id : position.token1.id,
           3000,
 
-          hre.ethers.formatEther(
+          (hre.ethers.formatEther(
             isToken0 ? position.borrowBalance0 : position.borrowBalance1
           ) *
             10 ** 18 +
-            100000000,
+            1000000000000).toString(),
           // position.borrowBalance0,
           position.pool,
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
           isToken0
-            ? -57896044618658097711785492504343953926634992332820282019728792003956564819967n
-            : 57896044618658097711785492504343953926634992332820282019728792003956564819967n,
+            ? "-57896044618658097711785492504343953926634992332820282019728792003956564819967"
+            : "57896044618658097711785492504343953926634992332820282019728792003956564819967",
         ];
-        // let payload = [
-        //   '0x172370d5cd63279efa6d502dab29171933a610af',
-        //   3000,
-        //   30000000,
-        //   '0xcb7359DcdF523F32A8987C116a001a59dcEbe00f',
-        //   '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601',
-        //   '0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a',
-        // ];
 
         console.log('PAYLOAD: ', payload);
         935503348411897798n;
@@ -163,10 +155,10 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+// main().catch((error) => {
+//   console.error(error);
+//   process.exitCode = 1;
+// });
 
 function runDelay() {
   main().catch((error) => {
@@ -176,7 +168,7 @@ function runDelay() {
   setTimeout(runDelay, process.env.DELAY * 1000);
 }
 
-// runDelay();
+runDelay();
 
 /// code cleanup
 // secrete manager code?
