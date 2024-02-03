@@ -1,9 +1,12 @@
 require('@nomicfoundation/hardhat-toolbox');
+require('dotenv').config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 // const api = process.env.HARDHAT_ALCHEMY_API;
 
-const mainnetUrl = `https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK`;
+// console.log(api, "api key")
+const mainnetUrl =
+  'https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK';
 module.exports = {
   solidity: '0.7.6',
   // '0.7.6',
