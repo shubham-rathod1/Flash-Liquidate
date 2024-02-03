@@ -7,6 +7,7 @@
 
 var BigNumber = require('bignumber.js');
 const helperAbi = require('./abis/helper.json');
+const flashLiquidateAbi = require('./abis/flashLiqidate.json');
 const { graphData } = require('./fetcher');
 const { Constants } = require('./constants');
 const { handleLiquidate } = require('./liquidationBot');
@@ -27,29 +28,40 @@ async function main() {
     console.log('ENV_VAL_1', process.env.testKey1);
     console.log('ENV_VAL_2', process.env.testKey2);
 
-    const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
-      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-      '0x1F98431c8aD98523631AE4a59f267346ea31F984',
-      '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd',
-    ]);
-    await FlashLiquidate.waitForDeployment();
+    // const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
+    //   '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    //   '0x1F98431c8aD98523631AE4a59f267346ea31F984',
+    //   '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+    //   '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd',
+    // ]);
+    // await FlashLiquidate.waitForDeployment();
 
     const accounts = await ethers.getSigners();
     console.log(accounts[0].address, 'my address!');
 
-    const HelperContract = await hre.ethers.deployContract('helper', []);
-    await HelperContract.waitForDeployment();
+    const FlashLiquidate = await hre.ethers.getContractAt(
+      flashLiquidateAbi,
+      '0x2903D1B6341F162773d77E362FbcB825464EA7B4'
+    );
 
-    console.log(`FlashSwap deployed to ${FlashLiquidate.target}`);
-    console.log(`Helper deployed to ${HelperContract.target}`);
+    // const HelperContract = await hre.ethers.deployContract('helper', []);
+    // await HelperContract.waitForDeployment();
+
+    // console.log(`FlashSwap deployed to ${FlashLiquidate.target}`);
+    // console.log(`Helper deployed to ${HelperContract.target}`);
 
     const helperContract = await hre.ethers.getContractAt(
       helperAbi,
-      HelperContract.target
+      '0x4F57c40D3dAA7BF2EC970Dd157B1268982158720'
     );
 
     const data = await graphData.fetchGraphData(137);
+    const poolData = await graphData.getUniswapPools(
+      '0x514910771af9ca656af840dff83e8264ecf986ca',
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    );
+    console.log('GRAPH_DATA', data);
+    console.log('POOLDATA', poolData);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
@@ -62,13 +74,6 @@ async function main() {
       '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
       '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
     );
-
-    console.log(
-      'ETHER_FORM',
-      hre.ethers.formatEther(31171n) * 10 ** 18,
-      hre.ethers.formatEther(147580189146985034n) * 10 ** 18,
-      new BigNumber(147580189146985034n).plus(10 ** 6).toFixed()
-    ); //ETHER_FORM 31170.999999999996 148580189146985034 148580189146985034 1147580189146985034 147580189147985034
 
     const liquidatePosition = async (position) => {
       try {
@@ -124,7 +129,7 @@ async function main() {
           `--------------completed Liquidation for position${position.id}------------------`
         );
 
-        const userData = await HelperContract.getPoolFullData(
+        const userData = await helperContract.getPoolFullData(
           '0x2EafE683A4c65B03C9b7315881704Ace33936322',
           '0xa76f2d36071907867b8db0704e3d1362f8fee3c1',
           '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
@@ -152,8 +157,8 @@ async function main() {
     // await Promise.all(positions?.map(liquidatePosition));
     // await liquidatePosition(positions[0]);
     // if (positions[1]) await liquidatePosition(positions[1]);
-    if (positions.length > 0)
-      await Promise.allSettled(positions?.map(liquidatePosition));
+    // if (positions.length > 0)
+    //   await Promise.allSettled(positions?.map(liquidatePosition));
     console.timeEnd('promise stated');
   } catch (error) {
     console.error('An error occurred:', error);

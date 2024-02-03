@@ -100,4 +100,4 @@ const getUniswapPools = (token1, token2) => {
 
 console.log('is this running');
 
-exports.graphData = { fetchGraphData };
+exports.graphData = { fetchGraphData, getUniswapPools };
