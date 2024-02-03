@@ -14,16 +14,16 @@ const logger = require('../logger');
 const getSecret = require('../secrets');
 require('dotenv').config();
 
-logger.info('check logger');
+// logger.info('check logger');
 
 const hre = require('hardhat');
-const LIQUIDATION_THRESHOLD =
+const MaxValue =
   '57896044618658097711785492504343953926634992332820282019728792003956564819967';
 const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 
 async function main() {
   try {
-    await getSecret();
+    // await getSecret();
     console.log('ENV_VAL_1', process.env.testKey1);
     console.log('ENV_VAL_2', process.env.testKey2);
 
@@ -68,7 +68,7 @@ async function main() {
       hre.ethers.formatEther(31171n) * 10 ** 18,
       hre.ethers.formatEther(147580189146985034n) * 10 ** 18,
       new BigNumber(147580189146985034n).plus(10 ** 6).toFixed()
-    ); //ETHER_FORM 31170.999999999996 148580189146985034 148580189146985034 1147580189146985034 147580189147985034
+    );
 
     const liquidatePosition = async (position) => {
       try {
@@ -103,18 +103,18 @@ async function main() {
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
           isToken0
-            ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
-            : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
+            ? `-${MaxValue}`
+            : MaxValue,
         ];
 
         console.log('PAYLOAD: ', payload);
-        935503348411897798n;
 
         // profit calculation here
 
         // execute if profitable
 
         // check pool liquidity
+
         console.log(
           `--------------started Liquidation for position${position.id}------------------`
         );
@@ -151,9 +151,9 @@ async function main() {
     console.time('promise stated');
     // await Promise.all(positions?.map(liquidatePosition));
     // await liquidatePosition(positions[0]);
-    // if (positions[1]) await liquidatePosition(positions[1]);
-    if (positions.length > 0)
-      await Promise.allSettled(positions?.map(liquidatePosition));
+    if (positions[0]) await liquidatePosition(positions[0]);
+    // if (positions.length > 0)
+      // await Promise.allSettled(positions?.map(liquidatePosition));
     console.timeEnd('promise stated');
   } catch (error) {
     console.error('An error occurred:', error);

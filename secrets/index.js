@@ -12,6 +12,8 @@ const awsConfig = {
   region: process.env.AWS_REGION,
 };
 
+console.log(awsConfig, "aws config");
+
 const client = new SecretsManagerClient(awsConfig);
 
 const getSecret = async () => {
