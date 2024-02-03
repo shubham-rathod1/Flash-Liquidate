@@ -38,7 +38,7 @@ const fetchGraphData = async (chain) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: `{positions(where: {or:[{borrowBalance0_gt:"0"}, {borrowBalance1_gt: "0"}]}) {
+        query: `{positions(where: {or:[{borrowBalance0_gt:"1"}, {borrowBalance1_gt: "1"}]}) {
     id
     borrowBalance0
     borrowBalance1
@@ -52,11 +52,13 @@ const fetchGraphData = async (chain) => {
       id
       symbol
       name
+      decimals
     }
     token1 {
       id
       symbol
       name
+      decimals
     }
   }
 }
@@ -67,7 +69,7 @@ const fetchGraphData = async (chain) => {
       .then((res) => {
         filteredData = res.data.positions;
       });
-      // console.log(filteredData);
+    // console.log(filteredData);
     return filteredData;
   } catch (error) {
     console.log(error);
@@ -96,6 +98,6 @@ const getUniswapPools = (token1, token2) => {
 
 // fetchGraphData(137);
 
-console.log("is this running")
+console.log('is this running');
 
-exports.graphData = {fetchGraphData};
+exports.graphData = { fetchGraphData };

@@ -31,7 +31,7 @@ async function main() {
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
       '0x1F98431c8aD98523631AE4a59f267346ea31F984',
       '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0xA7261e3cda9A4E2C81a82791DA6f2aaAA10A3cb3',
+      '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd',
     ]);
     await FlashLiquidate.waitForDeployment();
 
@@ -55,7 +55,6 @@ async function main() {
       data,
       helperContract
     );
-
     // console.log(positions,"user liquidable position");
 
     const userData0 = await helperContract.getPoolFullData(
@@ -64,9 +63,19 @@ async function main() {
       '0xd5b26ac46d2f43f4d82889f4c7bbc975564859e3'
     );
 
+    console.log(
+      'ETHER_FORM',
+      hre.ethers.formatEther(31171n) * 10 ** 18,
+      hre.ethers.formatEther(147580189146985034n) * 10 ** 18,
+      new BigNumber(147580189146985034n).plus(10 ** 6).toFixed()
+    ); //ETHER_FORM 31170.999999999996 148580189146985034 148580189146985034 1147580189146985034 147580189147985034
+
     const liquidatePosition = async (position) => {
       try {
         const isToken0 = position.liquidableToken == 'token0';
+        const isStableCoin = position[position.liquidableToken].decimals === 6;
+        console.log('isStableCoin', isStableCoin);
+
         console.log(
           'before liquidation',
           hre.ethers.formatEther(
@@ -84,18 +93,18 @@ async function main() {
           isToken0 ? position.token0.id : position.token1.id,
           3000,
 
-          (hre.ethers.formatEther(
+          new BigNumber(
             isToken0 ? position.borrowBalance0 : position.borrowBalance1
-          ) *
-            10 ** 18 +
-            1000000000000).toString(),
+          )
+            .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
+            .toFixed(),
           // position.borrowBalance0,
           position.pool,
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
           isToken0
-            ? "-57896044618658097711785492504343953926634992332820282019728792003956564819967"
-            : "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+            ? '-57896044618658097711785492504343953926634992332820282019728792003956564819967'
+            : '57896044618658097711785492504343953926634992332820282019728792003956564819967',
         ];
 
         console.log('PAYLOAD: ', payload);
@@ -123,7 +132,7 @@ async function main() {
         // await flash.wait();
 
         console.log(
-          'after liquidation',
+          `after liquidation of position ${position.id}`,
           hre.ethers.formatEther(
             isToken0 ? userData._borrowBalance0 : userData._borrowBalance1
           ),
@@ -139,12 +148,12 @@ async function main() {
       }
     };
     // needs to select one as required
-    let x = Date.now();
     console.time('promise stated');
     // await Promise.all(positions?.map(liquidatePosition));
-    await liquidatePosition(positions[0]);
-    if (positions[1]) await liquidatePosition(positions[1]);
-    // await Promise.allSettled(positions?.map(liquidatePosition));
+    // await liquidatePosition(positions[0]);
+    // if (positions[1]) await liquidatePosition(positions[1]);
+    if (positions.length > 0)
+      await Promise.allSettled(positions?.map(liquidatePosition));
     console.timeEnd('promise stated');
   } catch (error) {
     console.error('An error occurred:', error);
