@@ -213,7 +213,7 @@ contract FlashLiquidate is
     ) private {
         // require(msg.sender == _pair, "Sender is not Pair");
 
-        // console.log(_liquidationAmount,"liquyidation");
+        console.logInt(_liquidationAmount);
 
         unilendCore.liquidate(
             _pool,
