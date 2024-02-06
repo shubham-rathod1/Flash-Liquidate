@@ -7,8 +7,7 @@ const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
   transports: [
-    // update below params with env
-    new winston.transports.Console(),
+    // new winston.transports.Console(),
     new WinstonCloudWatch({
       logGroupName: 'testLog',
       logStreamName: 'testStream',
