@@ -1,10 +1,3 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-
 var BigNumber = require('bignumber.js');
 const helperAbi = require('./abis/helper.json');
 const flashLiquidateAbi = require('./abis/flashLiqidate.json');
@@ -16,8 +9,6 @@ const getSecret = require('../secrets');
 require('dotenv').config();
 const hre = require('hardhat');
 
-// logger.info('check logger');
-
 const { FlashLiquidateAddress } = require('../logger/addresses');
 const MaxValue =
   '57896044618658097711785492504343953926634992332820282019728792003956564819967';
@@ -25,15 +16,11 @@ const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 
 async function main() {
   try {
-    // await getSecret();
-    // console.log('ENV_VAL_1', process.env.testKey1);
-    // console.log('ENV_VAL_2', process.env.testKey2);
-
     const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
       '0x1F98431c8aD98523631AE4a59f267346ea31F984',
       '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd',
+      '0x9FAf60E7350de552355Eef4e811C7E3046b0d358',
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
@@ -57,18 +44,16 @@ async function main() {
       '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
     );
     console.log('GRAPH_DATA', data);
-    // console.log('POOLDATA', poolData);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
       helperContract
     );
-    // console.log(positions,"user liquidable position");
 
     const liquidatePosition = async (position) => {
       try {
         const userData0 = await helperContract.getPoolFullData(
-          '0x48D604cC5B2D1A3867ea062DE299702b801aDe24',
+          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
           position.pool,
           position.owner
         );
@@ -86,7 +71,6 @@ async function main() {
           ),
           userData0._healthFactor0,
           userData0._healthFactor1
-          // hre.ethers.formatEther(1) * 10 ** 18
         );
         console.log('POSITION_ID', position.id);
         let payload = [
@@ -98,7 +82,6 @@ async function main() {
           )
             .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
             .toFixed(),
-          // position.borrowBalance0,
           position.pool,
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
@@ -144,13 +127,13 @@ async function main() {
       }
     };
     // needs to select one as required
-    console.time('promise stated');
+    console.time('promise started');
     // await Promise.all(positions?.map(liquidatePosition));
     // await liquidatePosition(positions[0]);
     // if (positions[1]) await liquidatePosition(positions[1]);
     if (positions.length > 0)
       await Promise.allSettled(positions?.map(liquidatePosition));
-    console.timeEnd('promise stated');
+    console.timeEnd('promise started');
   } catch (error) {
     console.error('An error occurred:', error);
     logger.error('An error occurred:', error);
@@ -174,6 +157,3 @@ function runDelay() {
 }
 
 runDelay();
-
-/// code cleanup
-// secrete manager code?

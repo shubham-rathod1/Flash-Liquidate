@@ -86,7 +86,7 @@ const getUniswapPools = (token1, token2) => {
       },
     })
     .then((res) => {
-      console.log(res.data.data);
+      // console.log(res.data.data);
       return res.data.data;
     });
 };

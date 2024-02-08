@@ -1,5 +1,5 @@
-const coreAddress = '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd';
-const positionContract = '0x48D604cC5B2D1A3867ea062DE299702b801aDe24';
+const coreAddress = '0x9FAf60E7350de552355Eef4e811C7E3046b0d358';
+const positionContract = '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0';
 const flashLiquidate = '0x2903D1B6341F162773d77E362FbcB825464EA7B4';
 // 0x2903D1B6341F162773d77E362FbcB825464EA7B4
 const HelperAddress = '0x4F57c40D3dAA7BF2EC970Dd157B1268982158720';
@@ -8,7 +8,7 @@ const maxAllow =
 const graphZkEvm =
   'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-zkevm';
 const graphPolygonMain =
-  'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon-2';
+  'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon-3';
 // 'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilendtest';
 // "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon";
 const graphMumbai =
@@ -58,5 +58,3 @@ exports.Constants = {
   graphZkEvm,
   chainData,
 };
-
-// https://polygon-mumbai.g.alchemy.com/v2/NWRaRuKnQbi8M2HMuf44rZS8Tro6FIH8
