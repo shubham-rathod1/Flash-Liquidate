@@ -27,7 +27,7 @@ async function main() {
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
       '0x1F98431c8aD98523631AE4a59f267346ea31F984',
       '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0x4ceA84C8b31f40AdC606084F2d1aaF207E504BAd',
+      '0x9FAf60E7350de552355Eef4e811C7E3046b0d358',
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
@@ -46,10 +46,10 @@ async function main() {
     );
 
     const data = await graphData.fetchGraphData(137);
-    const poolData = await graphData.getUniswapPools(
-      '0x514910771af9ca656af840dff83e8264ecf986ca',
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-    );
+    // const poolData = await graphData.getUniswapPools(
+    //   '0x514910771af9ca656af840dff83e8264ecf986ca',
+    //   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    // );
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
@@ -96,7 +96,7 @@ async function main() {
         );
 
         const userData = await helperContract.getPoolFullData(
-          '0x48D604cC5B2D1A3867ea062DE299702b801aDe24',
+          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
           position.pool,
           position.owner
         );
