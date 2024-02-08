@@ -20,10 +20,10 @@ interface IUnilendV2Core {
     function liquidate(
         address _pool,
         address _for,
-        int256 _amount,
+        int _amount,
         address _receiver,
         bool uPosition
-    ) external returns (int256 payAmount);
+    ) external returns (int payAmount);
 }
 
 contract FlashLiquidate is

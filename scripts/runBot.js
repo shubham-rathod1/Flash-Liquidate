@@ -26,8 +26,8 @@ const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
 async function main() {
   try {
     // await getSecret();
-    console.log('ENV_VAL_1', process.env.testKey1);
-    console.log('ENV_VAL_2', process.env.testKey2);
+    // console.log('ENV_VAL_1', process.env.testKey1);
+    // console.log('ENV_VAL_2', process.env.testKey2);
 
     const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
@@ -57,7 +57,7 @@ async function main() {
       '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
     );
     console.log('GRAPH_DATA', data);
-    console.log('POOLDATA', poolData);
+    // console.log('POOLDATA', poolData);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
