@@ -39,11 +39,10 @@ async function main() {
     );
 
     const data = await graphData.fetchGraphData(137);
-    const poolData = await graphData.getUniswapPools(
-      '0x514910771af9ca656af840dff83e8264ecf986ca',
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-    );
-    console.log('GRAPH_DATA', data);
+    // const poolData = await graphData.getUniswapPools(
+    //   '0x514910771af9ca656af840dff83e8264ecf986ca',
+    //   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    // );
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
@@ -52,31 +51,12 @@ async function main() {
 
     const liquidatePosition = async (position) => {
       try {
-        const userData0 = await helperContract.getPoolFullData(
-          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
-          position.pool,
-          position.owner
-        );
         const isToken0 = position.liquidableToken == 'token0';
         const isStableCoin = position[position.liquidableToken].decimals === 6;
-        console.log('isStableCoin', isStableCoin);
 
-        console.log(
-          'before liquidation',
-          hre.ethers.formatEther(
-            isToken0 ? userData0._borrowBalance0 : userData0._borrowBalance1
-          ),
-          hre.ethers.formatEther(
-            isToken0 ? userData0._lendBalance1 : userData0._lendBalance0
-          ),
-          userData0._healthFactor0,
-          userData0._healthFactor1
-        );
-        console.log('POSITION_ID', position.id);
         let payload = [
           isToken0 ? position.token0.id : position.token1.id,
           3000,
-
           new BigNumber(
             isToken0 ? position.borrowBalance0 : position.borrowBalance1
           )
@@ -88,65 +68,61 @@ async function main() {
           isToken0 ? `-${MaxValue}` : MaxValue,
         ];
 
-        console.log('PAYLOAD: ', payload);
-
-        // profit calculation here
-
-        // execute if profitable
-
         console.log(
-          `--------------started Liquidation for position${position.id}------------------`
+          `--------------started Liquidation for position ${position.id}------------------`
         );
+        console.log('PAYLOAD: ', payload);
         const flash = await FlashLiquidate.initFlash(payload);
+        const receipt = await flash.wait();
+        const txHash = receipt.hash;
+        const txData = {
+          positionID: position.id,
+          transactionHash: txHash,
+          timestamp: new Date().toLocaleString(),
+          user: accounts[0],
+          positionOwner: position.owner,
+        };
+        logger.info(JSON.stringify(txData));
 
         console.log(
-          `--------------completed Liquidation for position${position.id}------------------`
+          `--------------completed Liquidation for position ${position.id}------------------`
         );
 
         const userData = await helperContract.getPoolFullData(
-          '0x48D604cC5B2D1A3867ea062DE299702b801aDe24',
+          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
           position.pool,
           position.owner
         );
-        // await flash.wait();
 
         console.log(
           `after liquidation of position ${position.id}`,
-          hre.ethers.formatEther(
+          `borrowBalance: ${hre.ethers.formatEther(
             isToken0 ? userData._borrowBalance0 : userData._borrowBalance1
-          ),
-          hre.ethers.formatEther(
+          )}`,
+          `lendBalance: ${hre.ethers.formatEther(
             isToken0 ? userData._lendBalance1 : userData._lendBalance0
-          ),
-          userData._healthFactor0,
-          userData._healthFactor1
+          )}`,
+          `_healthFactor0: ${userData._healthFactor0}`,
+          `_healthFactor1: ${userData._healthFactor1}`
         );
       } catch (error) {
-        console.error('An error occurred in liquidatePosition:', error);
-        logger.error('An error occurred in liquidatePosition:', error);
+        console.error(`An error occurred in Position ${position.id}: `, error);
+        logger.error(`An error occurred in Position ${position.id}: `, error);
       }
     };
-    // needs to select one as required
-    console.time('promise started');
-    // await Promise.all(positions?.map(liquidatePosition));
-    // await liquidatePosition(positions[0]);
-    // if (positions[1]) await liquidatePosition(positions[1]);
-    if (positions.length > 0)
-      await Promise.allSettled(positions?.map(liquidatePosition));
-    console.timeEnd('promise started');
+
+    if (positions.length > 0) {
+      // await Promise.allSettled(positions?.map(liquidatePosition));
+      for (let i = 0; i < positions.length; i++) {
+        await liquidatePosition(positions[i]);
+      }
+    }
   } catch (error) {
     console.error('An error occurred:', error);
     logger.error('An error occurred:', error);
     process.exitCode = 1;
   }
 }
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-// main().catch((error) => {
-//   console.error(error);
-//   process.exitCode = 1;
-// });
 
 function runDelay() {
   main().catch((error) => {
