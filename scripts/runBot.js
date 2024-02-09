@@ -58,7 +58,7 @@ async function liquidatePosition(
     );
 
     const userData = await helperContract.getPoolFullData(
-      "0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0",
+      "0x4B915E92a80498ca5e13c2f2715706A56C05659c",
       position.pool,
       position.owner
     );
@@ -86,7 +86,7 @@ async function main() {
       "0xE592427A0AEce92De3Edee1F18E0157C05861564",
       "0x1F98431c8aD98523631AE4a59f267346ea31F984",
       "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-      "0x9FAf60E7350de552355Eef4e811C7E3046b0d358",
+      "0x26883aD38ef58f4E33ce533f64E16c61319c99f6",
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
@@ -109,6 +109,7 @@ async function main() {
     //   '0x514910771af9ca656af840dff83e8264ecf986ca',
     //   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
     // );
+    console.log("DATA", data);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
