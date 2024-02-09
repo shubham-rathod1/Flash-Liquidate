@@ -1,32 +1,31 @@
-var BigNumber = require('bignumber.js');
-const helperAbi = require('./abis/helper.json');
-const flashLiquidateAbi = require('./abis/flashLiqidate.json');
-const { graphData } = require('./fetcher');
-const { Constants } = require('./constants');
-const { handleLiquidate } = require('./liquidationBot');
-const logger = require('../logger');
-const getSecret = require('../secrets');
-require('dotenv').config();
-const hre = require('hardhat');
+var BigNumber = require("bignumber.js");
+const helperAbi = require("./abis/helper.json");
+const flashLiquidateAbi = require("./abis/flashLiqidate.json");
+const { graphData } = require("./fetcher");
+const { Constants } = require("./constants");
+const { handleLiquidate } = require("./liquidationBot");
+const logger = require("../logger");
+require("dotenv").config();
+const hre = require("hardhat");
 
-const { FlashLiquidateAddress } = require('../logger/addresses');
+const { FlashLiquidateAddress } = require("../logger/addresses");
 const MaxValue =
-  '57896044618658097711785492504343953926634992332820282019728792003956564819967';
-const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
+  "57896044618658097711785492504343953926634992332820282019728792003956564819967";
+const USER_ADDRESS = "0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601";
 
 async function main() {
   try {
-    const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
-      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-      '0x1F98431c8aD98523631AE4a59f267346ea31F984',
-      '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0x9FAf60E7350de552355Eef4e811C7E3046b0d358',
+    const FlashLiquidate = await hre.ethers.deployContract("FlashLiquidate", [
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+      "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "0x9FAf60E7350de552355Eef4e811C7E3046b0d358",
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
 
     const accounts = await ethers.getSigners();
-    console.log(FlashLiquidateAddress, 'contract address!');
+    console.log(FlashLiquidateAddress, "contract address!");
 
     // const FlashLiquidate = await hre.ethers.getContractAt(
     //   flashLiquidateAbi,
@@ -35,7 +34,7 @@ async function main() {
 
     const helperContract = await hre.ethers.getContractAt(
       helperAbi,
-      '0x4F57c40D3dAA7BF2EC970Dd157B1268982158720'
+      "0x4F57c40D3dAA7BF2EC970Dd157B1268982158720"
     );
 
     const data = await graphData.fetchGraphData(137);
@@ -51,7 +50,7 @@ async function main() {
 
     const liquidatePosition = async (position) => {
       try {
-        const isToken0 = position.liquidableToken == 'token0';
+        const isToken0 = position.liquidableToken == "token0";
         const isStableCoin = position[position.liquidableToken].decimals === 6;
 
         let payload = [
@@ -71,7 +70,7 @@ async function main() {
         console.log(
           `--------------started Liquidation for position ${position.id}------------------`
         );
-        console.log('PAYLOAD: ', payload);
+        console.log("PAYLOAD: ", payload);
         const flash = await FlashLiquidate.initFlash(payload);
         const receipt = await flash.wait();
         const txHash = receipt.hash;
@@ -89,7 +88,7 @@ async function main() {
         );
 
         const userData = await helperContract.getPoolFullData(
-          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
+          "0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0",
           position.pool,
           position.owner
         );
@@ -118,8 +117,8 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error('An error occurred:', error);
-    logger.error('An error occurred:', error);
+    console.error("An error occurred:", error);
+    logger.error("An error occurred:", error);
     process.exitCode = 1;
   }
 }
