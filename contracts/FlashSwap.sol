@@ -91,11 +91,18 @@ contract FlashLiquidate is
             "user balance before liquidation"
         );
 
-        Liquidate(
-            decoded.unilendPool,
+        // Liquidate(
+        //     decoded.unilendPool,
+        //     decoded.positionOwner,
+        //     decoded.liqAmount
+        // );
+
+        unilendCore.liquidate(decoded.unilendPool,
             decoded.positionOwner,
-            decoded.liqAmount
-        );
+            decoded.liqAmount,
+            address(this),
+            false
+            );
 
         console.log(
             "Liquidated Successfully",
@@ -206,23 +213,23 @@ contract FlashLiquidate is
         );
     }
 
-    function Liquidate(
-        address _pool,
-        address _for,
-        int256 _liquidationAmount
-    ) private {
-        // require(msg.sender == _pair, "Sender is not Pair");
+    // function Liquidate(
+    //     address _pool,
+    //     address _for,
+    //     int256 _liquidationAmount
+    // ) private {
+    //     // require(msg.sender == _pair, "Sender is not Pair");
 
-        console.logInt(_liquidationAmount);
+    //     console.logInt(_liquidationAmount);
 
-        unilendCore.liquidate(
-            _pool,
-            _for,
-            _liquidationAmount,
-            address(this),
-            false
-        );
-    }
+    //     unilendCore.liquidate(
+    //         _pool,
+    //         _for,
+    //         _liquidationAmount,
+    //         address(this),
+    //         false
+    //     );
+    // }
 
     function swapToken(
         address tokenIn,
