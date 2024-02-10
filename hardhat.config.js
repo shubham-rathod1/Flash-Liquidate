@@ -6,7 +6,7 @@ require('dotenv').config();
 
 // console.log(api, "api key")
 const mainnetUrl =
-  'https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK';
+  'https://eth-mainnet.g.alchemy.com/v2/VZuKJ8r8DNkp7-YEc8NNg51BQnuwdhXK';
 module.exports = {
   solidity: '0.7.6',
   // '0.7.6',

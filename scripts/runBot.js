@@ -1,4 +1,4 @@
-var BigNumber = require('bignumber.js');
+var {BigNumber, times} = require('bignumber.js');
 const helperAbi = require('./abis/helper.json');
 const flashLiquidateAbi = require('./abis/flashLiqidate.json');
 const { graphData } = require('./fetcher');
@@ -19,15 +19,13 @@ async function main() {
     const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
       '0x1F98431c8aD98523631AE4a59f267346ea31F984',
-      '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-      '0x9FAf60E7350de552355Eef4e811C7E3046b0d358',
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+      '0xFf5a76B24e6A3F01E8FcA19661CFD2B69A88BE59',
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
 
     const accounts = await ethers.getSigners();
-    console.log(FlashLiquidateAddress, 'contract address!');
-
     // const FlashLiquidate = await hre.ethers.getContractAt(
     //   flashLiquidateAbi,
     //   FlashLiquidateAddress
@@ -35,10 +33,10 @@ async function main() {
 
     const helperContract = await hre.ethers.getContractAt(
       helperAbi,
-      '0x4F57c40D3dAA7BF2EC970Dd157B1268982158720'
+      '0xAE84B51a1ee35275542Dd99df0F107d4F4e32A63'
     );
 
-    const data = await graphData.fetchGraphData(137);
+    const data = await graphData.fetchGraphData(1);
     // const poolData = await graphData.getUniswapPools(
     //   '0x514910771af9ca656af840dff83e8264ecf986ca',
     //   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
@@ -83,13 +81,13 @@ async function main() {
           positionOwner: position.owner,
         };
         logger.info(JSON.stringify(txData));
-
+        console.log(new BigNumber(receipt.gasUsed).times(37).toFixed(), "Gas used for liquidation");
         console.log(
           `--------------completed Liquidation for position ${position.id}------------------`
         );
 
         const userData = await helperContract.getPoolFullData(
-          '0x6D922876074cCA3ef3fB16D63dc45D72D9C4F2A0',
+          '0xeE607AFC0A1b5cf67B5AAe1Be3E7A154E2B162c7',
           position.pool,
           position.owner
         );
