@@ -5,6 +5,8 @@ require('dotenv').config();
 // const api = process.env.HARDHAT_ALCHEMY_API;
 
 // console.log(api, "api key")
+const polygonUrl =
+  'https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK';
 const mainnetUrl =
   'https://eth-mainnet.g.alchemy.com/v2/VZuKJ8r8DNkp7-YEc8NNg51BQnuwdhXK';
 module.exports = {
@@ -13,7 +15,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: mainnetUrl,
+        url: polygonUrl,
         enabled: true,
       },
     },

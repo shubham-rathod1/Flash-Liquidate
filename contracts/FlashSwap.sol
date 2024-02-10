@@ -12,8 +12,7 @@ import "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "./lib/interfaces/IUniswapV3Factory.sol";
-import "./lib/interfaces/IUnilendV2Pool.sol";
-
+// import "./lib/interfaces/IUnilendV2Pool.sol";
 import "hardhat/console.sol";
 
 interface IUnilendV2Core {
@@ -25,7 +24,6 @@ interface IUnilendV2Core {
         bool uPosition
     ) external returns (int payAmount);
 }
-
 contract FlashLiquidate is
     IUniswapV3FlashCallback,
     PeripheryImmutableState,
@@ -37,8 +35,6 @@ contract FlashLiquidate is
     ISwapRouter public immutable swapRouter;
     IUniswapV3Factory public immutable factoryAddress;
     IUnilendV2Core public immutable unilendCore;
-
-    // address private constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
 
     constructor(
         ISwapRouter _swapRouter,
@@ -62,40 +58,15 @@ contract FlashLiquidate is
         );
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        console.log(decoded.payer, "payer");
-
-        console.log(
-            "loan amount",
-            IERC20(decoded.borrowAddress).balanceOf(address(this))
-        );
-
         IERC20(decoded.borrowAddress).approve(
             address(unilendCore),
-            57896044618658097711785492504343953926634992332820282019728792003956564819967
+            type(uint).max
         );
 
-
         console.log(
-            "check allowance",
-            IERC20(decoded.borrowAddress).allowance(
-                address(this),
-                address(unilendCore)
-            )
-        );
-
-        console.log(decoded.amount,"liquidaton amoutn");
-
-        address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-        console.log(
-            IERC20(decoded.borrowAddress).balanceOf(user),
+            IERC20(decoded.borrowAddress).balanceOf(decoded.userWallet),
             "user balance before liquidation"
         );
-
-        // Liquidate(
-        //     decoded.unilendPool,
-        //     decoded.positionOwner,
-        //     decoded.liqAmount
-        // );
 
         unilendCore.liquidate(decoded.unilendPool,
             decoded.positionOwner,
@@ -109,55 +80,31 @@ contract FlashLiquidate is
             IERC20(decoded.liqToken).balanceOf(address(this))
         );
 
-        swapToken(decoded.liqToken, decoded.borrowAddress);
+        _swapToken(decoded.liqToken, decoded.borrowAddress);
 
-        console.log(fee0, fee1, "fee from callback");
-
-        uint256 amountOwed = LowGasSafeMath.add(decoded.amount, fee0 > 0 ? fee0: fee1);
-
-        console.log("amountOwed", amountOwed);
-
-        if (amountOwed > 0) {
-            console.log("payback condition ran");
-            require(
-                IERC20(decoded.borrowAddress).balanceOf(address(this)) >
-                    amountOwed,
-                "not enough to pay loan fee!"
-            );
-            pay(decoded.borrowAddress, address(this), msg.sender, amountOwed);
-        }
-        // pay profit to user
-        TransferHelper.safeTransfer(
-            decoded.borrowAddress,
-            user,
-            IERC20(decoded.borrowAddress).balanceOf(address(this))
-        );
-        console.log(
-            IERC20(decoded.borrowAddress).balanceOf(user),
-            "user got credited with profit"
-        );
+        _paybackAndPayProfit(decoded.borrowAddress,decoded.amount,fee0,fee1, decoded.userWallet);
     }
-
     struct FlashParams {
         address tokenBorrow;
-        uint24 fee;
-        uint256 amount;
         address unilendPool;
         address positionOwner;
         address liqToken;
+        address userWallet;
         int256 liqAmount;
-    }
-
-    struct FlashCallbackData {
         uint256 amount;
+        uint24 fee;
+    }
+    struct FlashCallbackData {
         address borrowAddress;
         address payer;
-        PoolAddress.PoolKey poolKey;
         address pair;
         address unilendPool;
         address positionOwner;
         address liqToken;
+        address userWallet;
+        uint256 amount;
         int256 liqAmount;
+        PoolAddress.PoolKey poolKey;
     }
 
     function initFlash(FlashParams memory params) external {
@@ -166,6 +113,7 @@ contract FlashLiquidate is
             params.tokenBorrow,
             params.fee
         );
+
         require(pair != address(0), "Pair not found");
         console.log(pair, "pair found");
 
@@ -176,18 +124,11 @@ contract FlashLiquidate is
         address token0 = IUniswapV3Pool(pair).token0();
         address token1 = IUniswapV3Pool(pair).token1();
 
-        console.log(token0, token1, "these are token0 and token1");
-
-        uint256 amount0Out = params.tokenBorrow == token0 ? params.amount : 0;
-        uint256 amount1Out = params.tokenBorrow == token1 ? params.amount : 0;
-
         PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({
             token0: token0,
             token1: token1,
             fee: params.fee
         });
-
-        // console.log(poolKey, "poolKey");
 
         IUniswapV3Pool pool = IUniswapV3Pool(
             PoolAddress.computeAddress(factory, poolKey)
@@ -195,8 +136,8 @@ contract FlashLiquidate is
         
         pool.flash(
             address(this),
-            amount0Out,
-            amount1Out,
+            params.tokenBorrow == token0 ? params.amount : 0,
+            params.tokenBorrow == token1 ? params.amount : 0,
             abi.encode(
                 FlashCallbackData({
                     amount: params.amount,
@@ -206,6 +147,7 @@ contract FlashLiquidate is
                     pair: pair,
                     unilendPool: params.unilendPool,
                     positionOwner: params.positionOwner,
+                    userWallet: params.userWallet,
                     liqToken: params.liqToken,
                     liqAmount: params.liqAmount
                 })
@@ -213,39 +155,14 @@ contract FlashLiquidate is
         );
     }
 
-    // function Liquidate(
-    //     address _pool,
-    //     address _for,
-    //     int256 _liquidationAmount
-    // ) private {
-    //     // require(msg.sender == _pair, "Sender is not Pair");
-
-    //     console.logInt(_liquidationAmount);
-
-    //     unilendCore.liquidate(
-    //         _pool,
-    //         _for,
-    //         _liquidationAmount,
-    //         address(this),
-    //         false
-    //     );
-    // }
-
-    function swapToken(
+    function _swapToken(
         address tokenIn,
         address tokenOut
-    ) internal returns (uint256 amountOut) {
+    ) private {
         uint amountIn = IERC20(tokenIn).balanceOf(address(this));
-
         TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
-        console.log(
-            "check allowance for swaping",
-            IERC20(tokenIn).allowance(address(this), address(swapRouter))
-        );
-
         uint24 poolFee1 = 3000;
         uint24 poolFee2 = 10000;
-
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(
@@ -260,9 +177,7 @@ contract FlashLiquidate is
                 amountIn: amountIn,
                 amountOutMinimum: 0
             });
-
-        // Executes the swap.
-        amountOut = swapRouter.exactInput(params);
+        swapRouter.exactInput(params);
 
         console.log(
             "amount after swap",
@@ -270,4 +185,15 @@ contract FlashLiquidate is
             IERC20(tokenIn).balanceOf(address(this))
         );
     }
+    function _paybackAndPayProfit(address borrowAddress, uint256 amount, uint256 fee0, uint256 fee1, address userWallet) private {
+        uint256 amountOwed = amount + (fee0 > 0 ? fee0 : fee1);
+        require(IERC20(borrowAddress).balanceOf(address(this)) >= amountOwed, "Insufficient funds to payback loan and profit");
+        pay(borrowAddress, address(this), msg.sender, amountOwed);
+        TransferHelper.safeTransfer(borrowAddress, userWallet, IERC20(borrowAddress).balanceOf(address(this)));
+        console.log(
+            IERC20(borrowAddress).balanceOf(userWallet),
+            "user got credited with profit"
+        );
+    }
+
 }

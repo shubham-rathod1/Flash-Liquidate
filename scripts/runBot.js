@@ -18,8 +18,8 @@ async function main() {
     const FlashLiquidate = await hre.ethers.deployContract('FlashLiquidate', [
       '0xE592427A0AEce92De3Edee1F18E0157C05861564',
       '0x1F98431c8aD98523631AE4a59f267346ea31F984',
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-      '0xFf5a76B24e6A3F01E8FcA19661CFD2B69A88BE59',
+      '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+      '0x26883aD38ef58f4E33ce533f64E16c61319c99f6',
     ]);
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
@@ -32,10 +32,10 @@ async function main() {
 
     const helperContract = await hre.ethers.getContractAt(
       helperAbi,
-      '0xAE84B51a1ee35275542Dd99df0F107d4F4e32A63'
+      '0x4F57c40D3dAA7BF2EC970Dd157B1268982158720'
     );
 
-    const data = await graphData.fetchGraphData(1);
+    const data = await graphData.fetchGraphData(137);
     // const poolData = await graphData.getUniswapPools(
     //   '0x514910771af9ca656af840dff83e8264ecf986ca',
     //   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
@@ -53,16 +53,17 @@ async function main() {
 
         let payload = [
           isToken0 ? position.token0.id : position.token1.id,
-          3000,
-          new BigNumber(
-            isToken0 ? position.borrowBalance0 : position.borrowBalance1
-          )
-            .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
-            .toFixed(),
           position.pool,
           position.owner,
           isToken0 ? position.token1.id : position.token0.id,
+          "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
           isToken0 ? `-${MaxValue}` : MaxValue,
+          new BigNumber(
+            isToken0 ? position.borrowBalance0 : position.borrowBalance1
+            )
+            .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
+            .toFixed(),
+            3000,
         ];
 
         console.log(
@@ -86,7 +87,7 @@ async function main() {
         );
 
         const userData = await helperContract.getPoolFullData(
-          '0xeE607AFC0A1b5cf67B5AAe1Be3E7A154E2B162c7',
+          '0x4B915E92a80498ca5e13c2f2715706A56C05659c',
           position.pool,
           position.owner
         );
