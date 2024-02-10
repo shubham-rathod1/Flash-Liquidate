@@ -3,15 +3,13 @@ const positionContract = '0xeE607AFC0A1b5cf67B5AAe1Be3E7A154E2B162c7';
 const flashLiquidate = '0x2903D1B6341F162773d77E362FbcB825464EA7B4';
 const HelperAddress = '0xAE84B51a1ee35275542Dd99df0F107d4F4e32A63';
 const maxAllow =
-  '57896044618658097711785492504343953926634992332820282019728792003956564819967';
+  "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const graphZkEvm =
-  'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-zkevm';
+  "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-zkevm";
 const graphPolygonMain =
-  'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon-3';
-// 'https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilendtest';
-// "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon";
+  "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon-2";
 const graphMumbai =
-  'https://api.thegraph.com/subgraphs/name/shubham-rathod1/my_unilend';
+  "https://api.thegraph.com/subgraphs/name/shubham-rathod1/my_unilend";
 
 const chainData = {
     1: {

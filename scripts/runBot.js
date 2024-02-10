@@ -5,14 +5,13 @@ const { graphData } = require('./fetcher');
 const { Constants } = require('./constants');
 const { handleLiquidate } = require('./liquidationBot');
 const logger = require('../logger');
-const getSecret = require('../secrets');
 require('dotenv').config();
 const hre = require('hardhat');
 
 const { FlashLiquidateAddress } = require('../logger/addresses');
 const MaxValue =
   '57896044618658097711785492504343953926634992332820282019728792003956564819967';
-const USER_ADDRESS = '0x4EB491B0fF2AB97B9bB1488F5A1Ce5e2Cab8d601';
+const USER_ADDRESS = '0x99A221a87b3C2238C90650fa9BE0F11e4c499D06';
 
 async function main() {
   try {
