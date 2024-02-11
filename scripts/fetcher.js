@@ -69,7 +69,6 @@ const fetchGraphData = async (chain) => {
       .then((res) => {
         filteredData = res.data.positions;
       });
-    // console.log(filteredData);
     return filteredData;
   } catch (error) {
     console.log(error);
@@ -86,18 +85,8 @@ const getUniswapPools = (token1, token2) => {
       },
     })
     .then((res) => {
-      // console.log(res.data.data);
       return res.data.data;
     });
 };
-
-// getUniswapPools(
-//   '0x514910771af9ca656af840dff83e8264ecf986ca',
-//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-// );
-
-// fetchGraphData(137);
-
-console.log('is this running');
 
 exports.graphData = { fetchGraphData, getUniswapPools };

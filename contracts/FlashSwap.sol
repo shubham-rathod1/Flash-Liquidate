@@ -80,7 +80,7 @@ contract FlashLiquidate is
             IERC20(decoded.liqToken).balanceOf(address(this))
         );
 
-        _swapToken(decoded.liqToken, decoded.borrowAddress);
+        _swapToken(decoded.liqToken, decoded.borrowAddress, decoded.swapFee0, decoded.swapFee1);
 
         _paybackAndPayProfit(decoded.borrowAddress,decoded.amount,fee0,fee1, decoded.userWallet);
     }
@@ -92,7 +92,9 @@ contract FlashLiquidate is
         address userWallet;
         int256 liqAmount;
         uint256 amount;
-        uint24 fee;
+        uint24 flashFee;
+        uint24 swapFee0;
+        uint24 swapFee1;
     }
     struct FlashCallbackData {
         address borrowAddress;
@@ -103,6 +105,8 @@ contract FlashLiquidate is
         address liqToken;
         address userWallet;
         uint256 amount;
+        uint24 swapFee0;
+        uint24 swapFee1;
         int256 liqAmount;
         PoolAddress.PoolKey poolKey;
     }
@@ -111,7 +115,7 @@ contract FlashLiquidate is
         address pair = factoryAddress.getPool(
             WETH9,
             params.tokenBorrow,
-            params.fee
+            params.flashFee
         );
 
         require(pair != address(0), "Pair not found");
@@ -127,7 +131,7 @@ contract FlashLiquidate is
         PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({
             token0: token0,
             token1: token1,
-            fee: params.fee
+            fee: params.flashFee
         });
 
         IUniswapV3Pool pool = IUniswapV3Pool(
@@ -149,7 +153,9 @@ contract FlashLiquidate is
                     positionOwner: params.positionOwner,
                     userWallet: params.userWallet,
                     liqToken: params.liqToken,
-                    liqAmount: params.liqAmount
+                    liqAmount: params.liqAmount,
+                    swapFee0: params.swapFee0,
+                    swapFee1: params.swapFee1
                 })
             )
         );
@@ -157,7 +163,9 @@ contract FlashLiquidate is
 
     function _swapToken(
         address tokenIn,
-        address tokenOut
+        address tokenOut,
+        uint24 swapFee0,
+        uint24 swapFee1
     ) private {
         uint amountIn = IERC20(tokenIn).balanceOf(address(this));
         TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
@@ -167,9 +175,9 @@ contract FlashLiquidate is
             .ExactInputParams({
                 path: abi.encodePacked(
                     tokenIn,
-                    poolFee1,
+                    swapFee0,
                     WETH9,
-                    poolFee2,
+                    swapFee1,
                     tokenOut
                 ),
                 recipient: address(this),

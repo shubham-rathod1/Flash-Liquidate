@@ -1,4 +1,4 @@
-const graphData = require('./fetcher');
+const {graphData} = require('./fetcher');
 const fs = require('fs');
 
 const liquidate = async (
@@ -75,5 +75,46 @@ const saveTransaction = async (transactionData) => {
   }
 };
 
+async function UniswapPoolConfig(borrowTokenAddress, rewardTokenAddress, weth) {
+  // Fetch borrow pools
+  const borrowPools = await graphData.getUniswapPools(weth, borrowTokenAddress);
+  const borrowedToken =
+    borrowPools.pools[0].token0.id == borrowTokenAddress ? 'token0' : 'token1';
+
+  // Filter Possible Borrow Pools
+  const possibleBorrowPools = borrowPools.pools.filter((pool) => {
+    return borrowedToken == 'token0'
+      ? parseFloat(pool.totalValueLockedToken0) > 500
+      : parseFloat(pool.totalValueLockedToken1) > 500;
+  });
+
+  // Fetch reward Pools
+  const rewardPools = await graphData.getUniswapPools(weth, rewardTokenAddress);
+
+  console.log(rewardPools.pools, "rewardpools")
+
+  // Map reward pools to objects with WETH liquidity
+  const poolsWithWethLiquidity = rewardPools.pools.map((pool) => ({
+    id: pool.id,
+    wethLiquidity: parseFloat(
+      pool.token0.id === weth
+        ? pool.totalValueLockedToken0
+        : pool.totalValueLockedToken1
+    ),
+  }));
+
+  // Find pool with the largest WETH liquidity
+  const poolWithLargestWethLiquidity = poolsWithWethLiquidity.reduce(
+    (maxPool, currentPool) =>
+      currentPool.wethLiquidity > maxPool.wethLiquidity ? currentPool : maxPool
+  );
+
+  return [
+    possibleBorrowPools[0],
+    poolWithLargestWethLiquidity,
+    possibleBorrowPools[1],
+  ];
+}
+
 // exports.helper = { helperData, liquidate, saveTransaction };
-exports.helper = { liquidate, saveTransaction };
+exports.helper = { liquidate, saveTransaction, UniswapPoolConfig};
