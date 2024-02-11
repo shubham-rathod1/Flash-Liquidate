@@ -1,13 +1,14 @@
-const coreAddress = "0x26883aD38ef58f4E33ce533f64E16c61319c99f6";
-const positionContract = "0x4B915E92a80498ca5e13c2f2715706A56C05659c";
+const coreAddress = "0x17dad892347803551CeEE2D377d010034df64347";
+const positionContract = "0x77B6569F0dbC4F265a575a84540c2A0Cae116a90";
 const flashLiquidate = "0x2903D1B6341F162773d77E362FbcB825464EA7B4";
 const HelperAddress = "0x4F57c40D3dAA7BF2EC970Dd157B1268982158720";
+
 const maxAllow =
   "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const graphZkEvm =
   "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-zkevm";
 const graphPolygonMain =
-  "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon-2";
+  "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-polygon";
 const graphMumbai =
   "https://api.thegraph.com/subgraphs/name/shubham-rathod1/my_unilend";
 
