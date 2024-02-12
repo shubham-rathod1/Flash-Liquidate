@@ -13,7 +13,7 @@ const { helper } = require("./helper");
 const MaxValue =
   "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const USER_ADDRESS = "0x99A221a87b3C2238C90650fa9BE0F11e4c499D06";
-chainId = 137;
+chainId = 1;
 
 async function liquidatePosition(
   position,
@@ -37,8 +37,8 @@ async function liquidatePosition(
       )
         .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
         .toFixed(),
-      3000,
-      3000,
+      10000,
+      500,
       10000,
     ];
 
