@@ -2,12 +2,13 @@ const { Constants } = require("./constants");
 const helperAbi = require("./abis/helper.json");
 const hre = require("hardhat");
 
+const chainId = 137;
 const computeLiquidablePositions = async (graphData, contract) => {
   try {
     const result = await Promise.all(
       graphData.map(async (item) =>
         contract.getPoolFullData(
-          Constants.chainData[137].positionContract,
+          Constants.chainData[chainId].positionContract,
           item.pool.id,
           item.owner
         )
