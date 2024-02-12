@@ -15,7 +15,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: mainnetUrl,
+        url: polygonUrl,
         enabled: true,
       },
     },

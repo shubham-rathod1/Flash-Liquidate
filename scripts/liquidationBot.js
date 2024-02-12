@@ -7,7 +7,7 @@ const computeLiquidablePositions = async (graphData, contract) => {
     const result = await Promise.all(
       graphData.map(async (item) =>
         contract.getPoolFullData(
-          Constants.chainData[1].positionContract,
+          Constants.chainData[137].positionContract,
           item.pool.id,
           item.owner
         )
