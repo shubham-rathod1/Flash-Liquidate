@@ -1,6 +1,6 @@
-const { Constants } = require('./constants');
-const helperAbi = require('./abis/helper.json');
-const hre = require('hardhat');
+const { Constants } = require("./constants");
+const helperAbi = require("./abis/helper.json");
+const hre = require("hardhat");
 
 const computeLiquidablePositions = async (graphData, contract) => {
   try {
@@ -13,6 +13,7 @@ const computeLiquidablePositions = async (graphData, contract) => {
         )
       )
     );
+    console.log("RESULT", result);
     let newArray = [];
     for (let i = 0; i < graphData.length; i++) {
       const canLiquidate =
@@ -22,7 +23,7 @@ const computeLiquidablePositions = async (graphData, contract) => {
 
       if (canLiquidate) {
         const liquidableToken =
-          result[i]._healthFactor0 < 1e18 ? 'token0' : 'token1';
+          result[i]._healthFactor0 < 1e18 ? "token0" : "token1";
 
         let payload = {
           ...graphData[i],
