@@ -13,6 +13,7 @@ const { helper } = require("./helper");
 const MaxValue =
   "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const USER_ADDRESS = "0x99A221a87b3C2238C90650fa9BE0F11e4c499D06";
+chainId = 137;
 
 async function liquidatePosition(
   position,
@@ -65,7 +66,7 @@ async function liquidatePosition(
     );
 
     const userData = await helperContract.getPoolFullData(
-      "0x77B6569F0dbC4F265a575a84540c2A0Cae116a90",
+      Constants.chainData[chainId].positionContract,
       position.pool,
       position.owner
     );
@@ -92,8 +93,8 @@ async function main() {
     const FlashLiquidate = await hre.ethers.deployContract("FlashLiquidate", [
       "0xE592427A0AEce92De3Edee1F18E0157C05861564",
       "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-      "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-      "0x17dad892347803551CeEE2D377d010034df64347",
+      Constants.chainData[chainId].wETH,
+      Constants.chainData[chainId].coreAddress,
     ]);
     /*
     mainnet
@@ -113,10 +114,10 @@ async function main() {
 
     const helperContract = await hre.ethers.getContractAt(
       helperAbi,
-      "0x4F57c40D3dAA7BF2EC970Dd157B1268982158720"
+      Constants.chainData[chainId].helperAddress
     );
 
-    const data = await graphData.fetchGraphData(137);
+    const data = await graphData.fetchGraphData(chainId);
 
     console.log("G_DATA", data);
 

@@ -19,6 +19,7 @@ const chainData = {
     coreAddress: "0xfcC475f6c889F8dB4B78E8fB8A55a98a6f996f83",
     helperAddress: "0xAE84B51a1ee35275542Dd99df0F107d4F4e32A63",
     positionContract: "0xEaC34370EE142F9F11F8211bA1c5a4c838ceBCE3",
+    wETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     rpc: "https://eth-mainnet.g.alchemy.com/v2/W-usSWrH7oB4wQBYiPadWiplGiKz1JP_",
   },
   137: {
@@ -28,6 +29,7 @@ const chainData = {
     helperAddress: HelperAddress,
     positionContract: positionContract,
     flashLiquidate: flashLiquidate,
+    wETH: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
     rpc: `https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK`,
   },
 };
