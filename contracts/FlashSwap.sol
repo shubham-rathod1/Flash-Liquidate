@@ -64,8 +64,8 @@ contract FlashLiquidate is
         );
 
         console.log(
-            IERC20(decoded.borrowAddress).balanceOf(decoded.userWallet),
-            "user balance before liquidation"
+            IERC20(decoded.borrowAddress).balanceOf(address(this)),
+            "loan amount before liquidation"
         );
 
         unilendCore.liquidate(decoded.unilendPool,
