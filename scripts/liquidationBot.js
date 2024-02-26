@@ -2,7 +2,8 @@ const { Constants } = require("./constants");
 const helperAbi = require("./abis/helper.json");
 const hre = require("hardhat");
 
-const chainId = 1;
+// const chainId = 1;
+const chainId = 42161;
 const computeLiquidablePositions = async (graphData, contract) => {
   try {
     const result = await Promise.all(

@@ -1,2 +1,2 @@
-const FlashLiquidateAddress = "0x3AD4869afcC42f5Ad199914d398b3172c576f413" 
+const FlashLiquidateAddress = "0x8D3fD274B5C1B818fFC46f38A0c27e9129f5775f" 
  exports.FlashLiquidateAddress = FlashLiquidateAddress;

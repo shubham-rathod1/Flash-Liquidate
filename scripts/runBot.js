@@ -13,10 +13,11 @@ const { helper } = require("./helper");
 const MaxValue =
   "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const USER_ADDRESS = "0x99A221a87b3C2238C90650fa9BE0F11e4c499D06";
-chainId = 1;
+// chainId = 1;
+chainId = 42161;
 
 async function liquidatePosition(
-  position,
+  position = {},
   FlashLiquidate,
   accounts,
   helperContract
@@ -37,10 +38,25 @@ async function liquidatePosition(
       )
         .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
         .toFixed(),
-      10000,
-      500,
-      10000,
+      3000,
+      3000,
+      3000,
     ];
+
+    //"5342850216387159048"
+    //89532446155779568941
+    // let payload = [
+    //   "0x11cdb42b0eb46d95f990bedd4695a6e3fa034978",
+    //   "0x8fad469416968965bc841d47886409f773c35a25",
+    //   "0x99a221a87b3c2238c90650fa9be0f11e4c499d06",
+    //   "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    //   "0xD5b26AC46d2F43F4d82889f4C7BBc975564859e3",
+    //   "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+    //   "5342851216387159048",
+    //   10000,
+    //   3000,
+    //   10000,
+    // ];
 
     console.log(
       `--------------started Liquidation for position ${position.id}------------------`
@@ -96,13 +112,7 @@ async function main() {
       Constants.chainData[chainId].wETH,
       Constants.chainData[chainId].coreAddress,
     ]);
-    /*
-    mainnet
-    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    "0xfcC475f6c889F8dB4B78E8fB8A55a98a6f996f83",
-    */
+
     await FlashLiquidate.waitForDeployment();
     console.log(`deployed FlashLiquidate at ${FlashLiquidate.target}`);
 
@@ -118,7 +128,6 @@ async function main() {
     );
 
     const data = await graphData.fetchGraphData(chainId);
-
     console.log("G_DATA", data);
 
     // const { pools } = await graphData.getUniswapPools(
@@ -147,13 +156,13 @@ async function main() {
       data,
       helperContract
     );
+    console.log("POSITION", positions);
     if (positions.length > 0) {
       // await Promise.allSettled(
       //   positions.map((position) =>
       //     liquidatePosition(position, FlashLiquidate, accounts, helperContract)
       //   )
       // );
-
       for (let i = 0; i < positions.length; i++) {
         await liquidatePosition(
           positions[i],
@@ -163,6 +172,7 @@ async function main() {
         );
       }
     }
+    // await liquidatePosition({}, FlashLiquidate, accounts, helperContract);
   } catch (error) {
     console.error("An error occurred:", error);
     logger.error("An error occurred:", error);
@@ -170,12 +180,17 @@ async function main() {
   }
 }
 
-function runDelay() {
-  main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
-  setTimeout(runDelay, process.env.DELAY * 1000);
-}
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 
-runDelay();
+// function runDelay() {
+//   main().catch((error) => {
+//     console.error(error);
+//     process.exitCode = 1;
+//   });
+//   setTimeout(runDelay, process.env.DELAY * 1000);
+// }
+
+// runDelay();
