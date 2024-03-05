@@ -42,6 +42,17 @@ const chainData = {
     wETH: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
     rpc: `https://polygon-mainnet.g.alchemy.com/v2/lGRIjTUZouUNPNZoyjSAFlVL0f-kvJRK`,
   },
+  42161: {
+    id: 42161,
+    graphUrl:
+      "https://api.thegraph.com/subgraphs/name/shubham-rathod1/unilend-arbritrum",
+    coreAddress: "0xBBDF4e0E4FDa0842599921Be429faA3d4faa3956",
+    helperAddress: "0xF757745E7781642804A3d333506b57BE8adea256",
+    positionContract: "0x55da4F6C98B1217095004F69e304F853663D1C11",
+    flashSwap: "",
+    wETH: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.VITE_ALCHEMY_ID_ARBITRUM}`,
+  },
 };
 
 exports.Constants = {
