@@ -40,7 +40,7 @@ async function liquidatePosition(
         .toFixed(),
       3000,
       3000,
-      3000,
+      10000,
     ];
 
     //"5342850216387159048"

@@ -39,16 +39,16 @@ const liquidate = async (
   }
 };
 
-try {
-  const existingData = fs.readFileSync("/path/to/transactions.json", "utf-8");
-  // Process existing data...
-} catch (error) {
-  if (error.code === "ENOENT") {
-    console.error("File not found");
-  } else {
-    console.error("An error occurred:", error);
-  }
-}
+// try {
+//   const existingData = fs.readFileSync("/path/to/transactions.json", "utf-8");
+//   // Process existing data...
+// } catch (error) {
+//   if (error.code === "ENOENT") {
+//     console.error("File not found");
+//   } else {
+//     console.error("An error occurred:", error);
+//   }
+// }
 
 async function UniswapPoolConfig(borrowTokenAddress, rewardTokenAddress, weth) {
   // Fetch borrow pools
