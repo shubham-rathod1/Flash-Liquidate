@@ -39,7 +39,12 @@ async function liquidatePosition(
       loanAmount
     );
 
-    console.log(poolFees, 'poolfees');
+    console.log(
+      poolFees[0].feeTier,
+      poolFees[1].feeTier,
+      poolFees[2].feeTier,
+      'poolfees'
+    );
 
     let payload = [
       isToken0 ? position.token0.id : position.token1.id,
@@ -53,9 +58,9 @@ async function liquidatePosition(
       )
         .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
         .toFixed(),
-      10000,
-      500,
-      10000,
+      poolFees[0].feeTier,
+      poolFees[1].feeTier,
+      poolFees[2].feeTier,
     ];
 
     console.log(
@@ -137,7 +142,7 @@ async function main() {
     const data = await graphData.fetchGraphData(chainId);
 
     console.log('G_DATA', data);
-    console.log('weth', Constants.chainData[chainId].wETH);
+    // console.log('weth', Constants.chainData[chainId].wETH);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
       data,
@@ -151,12 +156,13 @@ async function main() {
       // );
 
       for (let i = 0; i < positions.length; i++) {
-        await liquidatePosition(
-          positions[i],
-          FlashLiquidate,
-          accounts,
-          helperContract
-        );
+        positions[i].id !== 6 &&
+          (await liquidatePosition(
+            positions[i],
+            FlashLiquidate,
+            accounts,
+            helperContract
+          ));
       }
     }
   } catch (error) {

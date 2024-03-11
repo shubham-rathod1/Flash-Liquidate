@@ -14,7 +14,6 @@ const computeLiquidablePositions = async (graphData, contract) => {
         )
       )
     );
-    console.log("RESULT", result);
     let newArray = [];
     for (let i = 0; i < graphData.length; i++) {
       const canLiquidate =

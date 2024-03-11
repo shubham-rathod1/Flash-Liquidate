@@ -85,7 +85,7 @@ contract FlashLiquidate is
         _paybackAndPayProfit(decoded.borrowAddress,decoded.amount,fee0,fee1, decoded.userWallet);
     }
     struct FlashParams {
-        address tokenBorrow;
+        address borrowAddress;
         address unilendPool;
         address positionOwner;
         address liqToken;
@@ -113,8 +113,8 @@ contract FlashLiquidate is
 
     function initFlash(FlashParams memory params) external {
         address pair = factoryAddress.getPool(
-            WETH9,
-            params.tokenBorrow,
+            0xdAC17F958D2ee523a2206206994597C13D831ec7,
+            params.borrowAddress,
             params.flashFee
         );
 
@@ -140,12 +140,12 @@ contract FlashLiquidate is
         
         pool.flash(
             address(this),
-            params.tokenBorrow == token0 ? params.amount : 0,
-            params.tokenBorrow == token1 ? params.amount : 0,
+            params.borrowAddress == token0 ? params.amount : 0,
+            params.borrowAddress == token1 ? params.amount : 0,
             abi.encode(
                 FlashCallbackData({
                     amount: params.amount,
-                    borrowAddress: params.tokenBorrow,
+                    borrowAddress: params.borrowAddress,
                     payer: msg.sender,
                     poolKey: poolKey,
                     pair: pair,
@@ -169,8 +169,6 @@ contract FlashLiquidate is
     ) private {
         uint amountIn = IERC20(tokenIn).balanceOf(address(this));
         TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
-        uint24 poolFee1 = 3000;
-        uint24 poolFee2 = 10000;
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(
