@@ -174,9 +174,9 @@ contract FlashLiquidate is
                 path: abi.encodePacked(
                     tokenIn,
                     swapFee0,
-                    WETH9,
-                    swapFee1,
-                    tokenOut
+                    WETH9
+                    // swapFee1,
+                    // tokenOut
                 ),
                 recipient: address(this),
                 deadline: block.timestamp,

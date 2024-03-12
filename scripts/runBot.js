@@ -13,7 +13,16 @@ const { helper } = require("./helper");
 const MaxValue =
   "57896044618658097711785492504343953926634992332820282019728792003956564819967";
 const USER_ADDRESS = "0x99A221a87b3C2238C90650fa9BE0F11e4c499D06";
-chainId = 42161;
+chainId = 1;
+
+/****
+1. Flash loan WETH loan from USDT
+2. Now repay WETH and get USDC as a reward
+3. Use USDC to and get WETH
+4. Pay WETH to flash loan and remaining will be profit
+
+1st pool fee if it is low
+*/
 
 async function liquidatePosition(
   position,
@@ -25,25 +34,65 @@ async function liquidatePosition(
     const isToken0 = position.liquidableToken == "token0";
     const isStableCoin = position[position.liquidableToken].decimals === 6;
 
-    const loanAmount = hre.ethers.formatEther(
-      isToken0 ? position.borrowBalance0 : position.borrowBalance1
-    );
-    +(isStableCoin ? 10 ** 2 : 10 ** 12);
+    const loanAmount =
+      hre.ethers.formatEther(
+        isToken0 ? position.borrowBalance0 : position.borrowBalance1
+      ) + (isStableCoin ? 10 ** 2 : 10 ** 12);
 
-    console.log(loanAmount, "loanamount");
+    const rewardAmount = hre.ethers.formatEther(
+      isToken0 ? position.lendBalance1 : position.lendBalance0
+    );
+
+    console.log("LOAN_AMOUNT", loanAmount);
+    console.log("REWARD_AMOUNT", rewardAmount);
+
+    const isWEth = isToken0
+      ? position.token0.symbol
+      : position.token1.symbol === "WETH";
+
+    // // //USDT, USDC;
+    // const tokenList = [
+    //   "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    //   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    // ];
+    // let selectedToken = tokenList[0];
+    // let selectedPool = {};
+    // if (isWEth) {
+    //   for (let i = 0; i < tokenList.length; i++) {
+    //     const temp = await graphData.getUniswapPools2(
+    //       tokenList[0],
+    //       new BigNumber(
+    //         isToken0 ? position.borrowBalance0 : position.borrowBalance1
+    //       )
+    //         .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
+    //         .toFixed() / isStableCoin
+    //         ? 10 ** 6
+    //         : 10 ** 18
+    //     );
+
+    //     if (Object.keys(temp.pool).length > 0) {
+    //       console.log("CHECK_DATA", temp);
+    //       selectedToken = temp.selectedToken.id;
+    //       selectedPool = temp.pool;
+    //       break;
+    //     }
+    //   }
+    // }
 
     const poolFees = await helper.UniswapPoolConfig(
       (isToken0 ? position.token0.id : position.token1.id).toLowerCase(),
       (isToken0 ? position.token1.id : position.token0.id).toLowerCase(),
-      Constants.chainData[chainId].wETH.toLowerCase(),
-      loanAmount
+      // isWEth ? selectedToken : Constants.chainData[chainId].wETH.toLowerCase(),
+      loanAmount,
+      rewardAmount
     );
+    console.log("poolFees", poolFees);
 
     console.log(
       poolFees[0].feeTier,
       poolFees[1].feeTier,
       poolFees[2].feeTier,
-      'poolfees'
+      "poolfees"
     );
 
     let payload = [
@@ -59,8 +108,12 @@ async function liquidatePosition(
         .plus(isStableCoin ? 10 ** 2 : 10 ** 12)
         .toFixed(),
       poolFees[0].feeTier,
+      // selectedPool.feeTier,
       poolFees[1].feeTier,
       poolFees[2].feeTier,
+      // 3000,
+      // 10000,
+      // 500,
     ];
 
     console.log(
@@ -135,7 +188,9 @@ async function main() {
 
     const data = await graphData.fetchGraphData(chainId);
 
-    console.log('G_DATA', data);
+    // console.log("G_DATA", data);
+
+    // console.log("UNISWAP_G_DATA", temp);
     // console.log('weth', Constants.chainData[chainId].wETH);
 
     const positions = await handleLiquidate.computeLiquidablePositions(
@@ -149,14 +204,14 @@ async function main() {
       //   )
       // );
 
-      for (let i = 0; i < positions.length; i++) {
-        positions[i].id !== 6 &&
-          (await liquidatePosition(
-            positions[i],
-            FlashLiquidate,
-            accounts,
-            helperContract
-          ));
+      for (let i = 0; i < positions.length - 1; i++) {
+        // positions[i].id !== 6 &&
+        await liquidatePosition(
+          positions[i],
+          FlashLiquidate,
+          accounts,
+          helperContract
+        );
       }
     }
   } catch (error) {

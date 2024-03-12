@@ -17,7 +17,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: arbitrumUrl,
+        url: mainnetUrl,
         enabled: true,
       },
     },
